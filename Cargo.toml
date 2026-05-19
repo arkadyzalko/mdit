@@ -1,6 +1,5 @@
 [workspace]
 members = [
-  "apps/sync-cli",
   "apps/desktop/src-tauri",
   "crates/*"
 ]
