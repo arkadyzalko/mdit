@@ -241,7 +241,7 @@ function EditorStoryPane({
 	const didSetupRef = useRef(false)
 	const editor = usePlateEditor({
 		chunking: {
-			chunkSize: 100,
+			chunkSize: 500,
 			contentVisibilityAuto: true,
 			query: NodeApi.isEditor,
 		},

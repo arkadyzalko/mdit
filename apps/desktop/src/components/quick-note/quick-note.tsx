@@ -14,7 +14,7 @@ export function QuickNote() {
 	const [, navigate] = useLocation()
 	const editor = usePlateEditor({
 		chunking: {
-			chunkSize: 100,
+			chunkSize: 500,
 			contentVisibilityAuto: true,
 			query: NodeApi.isEditor,
 		},
