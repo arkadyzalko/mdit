@@ -15,6 +15,7 @@
 		"./markdown": "./src/markdown/index.ts",
 		"./math": "./src/math/index.ts",
 		"./media": "./src/media/index.ts",
+		"./minimap": "./src/minimap/index.ts",
 		"./plate": "./src/plate/index.ts",
 		"./selection": "./src/selection/index.ts",
 		"./shared": "./src/shared/index.ts",
@@ -23,7 +24,8 @@
 		"./tag": "./src/tag/index.ts",
 		"./table": "./src/table/index.ts",
 		"./title": "./src/title/index.ts",
-		"./toc": "./src/toc/index.ts"
+		"./toc": "./src/toc/index.ts",
+		"./web-kit": "./src/web-kit/web-editor-kit.ts"
 	},
 	"scripts": {
 		"build:storybook": "storybook build",
