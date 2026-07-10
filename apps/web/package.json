@@ -16,6 +16,7 @@
 		"@platejs/toc": "^53.0.0",
 		"@tanstack/react-router": "^1.166.2",
 		"@tanstack/react-start": "^1.166.2",
+		"lucide-react": "^0.539.0",
 		"platejs": "^53.0.5",
 		"react": "catalog:",
 		"react-dom": "catalog:"
