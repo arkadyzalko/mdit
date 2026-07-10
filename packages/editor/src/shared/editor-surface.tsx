@@ -5,7 +5,7 @@ import {
 	PlateContent,
 	type PlateEditor,
 } from "platejs/react"
-import type { KeyboardEvent } from "react"
+import type { KeyboardEvent, ReactNode } from "react"
 import { SelectionAreaCursor } from "../selection/selection-area-cursor"
 
 type EditorSurfaceProps = {
@@ -16,6 +16,7 @@ type EditorSurfaceProps = {
 	onBlur?: () => void
 	containerClassName?: string
 	contentClassName?: string
+	rightRail?: ReactNode
 }
 
 export function EditorSurface({
@@ -26,6 +27,7 @@ export function EditorSurface({
 	onBlur,
 	containerClassName,
 	contentClassName,
+	rightRail,
 }: EditorSurfaceProps) {
 	return (
 		<Plate editor={editor} onValueChange={onValueChange}>
@@ -54,6 +56,7 @@ export function EditorSurface({
 				/>
 			</PlateContainer>
 			<SelectionAreaCursor />
+			{rightRail}
 		</Plate>
 	)
 }

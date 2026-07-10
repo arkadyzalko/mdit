@@ -1,4 +1,5 @@
 import { createMarkdownDeserializerWithFallback } from "@mdit/editor/markdown"
+import { HeadingMinimap } from "@mdit/editor/minimap"
 import { NodeApi, usePlateEditor, type Value } from "@mdit/editor/plate"
 import { EditorSurface } from "@mdit/editor/shared"
 import {
@@ -488,7 +489,7 @@ function EditorContent({
 	return (
 		<div
 			ref={editorContainerRef}
-			className={`h-full overflow-hidden ${isExternalDropOver ? "bg-accent/20" : ""}`}
+			className={`relative h-full overflow-hidden ${isExternalDropOver ? "bg-accent/20" : ""}`}
 			data-editor-scroll-root
 			onMouseDownCapture={handleEditorMouseDownCapture}
 		>
@@ -512,6 +513,7 @@ function EditorContent({
 				onBlur={() => {
 					void handleSave("blur")
 				}}
+				rightRail={<HeadingMinimap />}
 			/>
 		</div>
 	)
