@@ -8,6 +8,11 @@ export default defineConfig({
 	server: {
 		port: 3100,
 	},
+	ssr: {
+		// Let Vite transform these packages (incl. their bare CSS imports)
+		// during dev SSR instead of Node's ESM loader, which cannot load ".css".
+		noExternal: ["@platejs/math", "katex"],
+	},
 	plugins: [
 		tailwindcss(),
 		tsConfigPaths({
