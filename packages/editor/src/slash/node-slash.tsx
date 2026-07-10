@@ -136,6 +136,12 @@ function createSlashGroups(host: SlashHostDeps): Group[] {
 		},
 		{
 			group: "AI",
+			// Hide when the AI plugin isn't registered (e.g. the web editor),
+			// otherwise selecting it would call an API that doesn't exist.
+			shouldHide: (editor) =>
+				!(editor as { plugins?: Record<string, unknown> }).plugins?.[
+					AIChatPlugin.key
+				],
 			items: [
 				{
 					focusEditor: false,

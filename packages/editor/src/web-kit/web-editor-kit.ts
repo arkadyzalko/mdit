@@ -18,6 +18,7 @@ import {
 import { MathKit } from "@mdit/editor/math"
 import { createMediaKit } from "@mdit/editor/media"
 import { CursorOverlayKit, FloatingToolbarKit } from "@mdit/editor/selection"
+import { createSlashKit } from "@mdit/editor/slash"
 import { SuggestionKit } from "@mdit/editor/suggestion"
 import { TableKit } from "@mdit/editor/table"
 import { TagKit } from "@mdit/editor/tag"
@@ -45,6 +46,9 @@ export const createWebEditorKit = ({
 	...(mdx ? MarkdownKit : MarkdownKitNoMdx),
 	...MathKit,
 	...createMediaKit({ host: webMediaHost }),
+	// No host: image-from-disk command is omitted (web uses paste/drop for
+	// images); all text/block commands work host-free.
+	...createSlashKit(),
 	...ShortcutsKit,
 	...SuggestionKit,
 	...TableKit,
