@@ -44,7 +44,7 @@ function RootDocument({ children }: { children: ReactNode }) {
 	return (
 		<html lang="en">
 			<head>
-				{/* biome-ignore lint/security/noDangerouslySetInnerHtml: static, no user input */}
+				{/* Static, no user input — sets theme class before paint. */}
 				<script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
 				<HeadContent />
 			</head>
