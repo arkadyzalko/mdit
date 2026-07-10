@@ -16,12 +16,14 @@ import {
 	MarkdownKitNoMdx,
 } from "@mdit/editor/markdown"
 import { MathKit } from "@mdit/editor/math"
+import { createMediaKit } from "@mdit/editor/media"
 import { CursorOverlayKit, FloatingToolbarKit } from "@mdit/editor/selection"
 import { SuggestionKit } from "@mdit/editor/suggestion"
 import { TableKit } from "@mdit/editor/table"
 import { TagKit } from "@mdit/editor/tag"
 import { TocKit } from "@mdit/editor/toc"
 import { webLinkServices } from "./web-link-services"
+import { webMediaHost } from "./web-media-host"
 
 type CreateWebEditorKitOptions = { mdx?: boolean }
 
@@ -42,6 +44,7 @@ export const createWebEditorKit = ({
 	...ListKit,
 	...(mdx ? MarkdownKit : MarkdownKitNoMdx),
 	...MathKit,
+	...createMediaKit({ host: webMediaHost }),
 	...ShortcutsKit,
 	...SuggestionKit,
 	...TableKit,

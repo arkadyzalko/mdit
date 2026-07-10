@@ -52,7 +52,7 @@ function resolveImageSrc(
 		return ""
 	}
 
-	if (rawUrl.startsWith("http")) {
+	if (rawUrl.startsWith("http") || rawUrl.startsWith("data:")) {
 		return rawUrl
 	}
 
