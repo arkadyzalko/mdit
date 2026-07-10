@@ -18,10 +18,7 @@ export function HeadingMinimap({
 
 	if (ticks.length === 0) return null
 
-	const scrollTo = (
-		e: React.MouseEvent<HTMLElement>,
-		id: string,
-	) => {
+	const scrollTo = (e: React.MouseEvent<HTMLElement>, id: string) => {
 		const heading = headingList.find((h) => h.id === id)
 		if (heading) onContentClick(e, heading, "smooth")
 	}

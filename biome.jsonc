@@ -9,7 +9,8 @@
 		"includes": [
 			"**",
 			"!**/worker-configuration.d.ts",
-			"!apps/www/src/routeTree.gen.ts"
+			"!apps/www/src/routeTree.gen.ts",
+			"!apps/web/src/routeTree.gen.ts"
 		]
 	},
 	"javascript": {
