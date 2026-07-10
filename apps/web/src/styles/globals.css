@@ -1,0 +1,18 @@
+@import "tailwindcss";
+@import "@mdit/ui/styles/theme.css";
+
+@source "../**/*.{html,js,jsx,ts,tsx}";
+@source "../../../../packages/ui/src/**/*.{ts,tsx}";
+@source "../../../../packages/editor/src/**/*.{ts,tsx}";
+
+@custom-variant dark (&:is(.dark *));
+
+@layer base {
+	* {
+		@apply border-border outline-ring/50;
+	}
+
+	body {
+		@apply bg-background text-foreground antialiased;
+	}
+}
