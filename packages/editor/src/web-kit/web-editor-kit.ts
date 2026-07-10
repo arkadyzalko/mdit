@@ -1,0 +1,44 @@
+import {
+	BasicBlocksKit,
+	ListKit,
+	ShortcutsKit,
+	UtilsKit,
+} from "@mdit/editor/basic"
+import { CalloutKit } from "@mdit/editor/callout"
+import { BasicMarksKit, CodeBlockKit } from "@mdit/editor/code"
+import { DateKit } from "@mdit/editor/date"
+import { EmojiKit } from "@mdit/editor/emoji"
+import {
+	AutoformatKit,
+	MarkdownKit,
+	MarkdownKitNoMdx,
+} from "@mdit/editor/markdown"
+import { MathKit } from "@mdit/editor/math"
+import { CursorOverlayKit, FloatingToolbarKit } from "@mdit/editor/selection"
+import { SuggestionKit } from "@mdit/editor/suggestion"
+import { TableKit } from "@mdit/editor/table"
+import { TocKit } from "@mdit/editor/toc"
+
+type CreateWebEditorKitOptions = { mdx?: boolean }
+
+export const createWebEditorKit = ({
+	mdx = true,
+}: CreateWebEditorKitOptions = {}) => [
+	...AutoformatKit,
+	...BasicBlocksKit,
+	...BasicMarksKit,
+	...CalloutKit,
+	...CodeBlockKit,
+	...CursorOverlayKit,
+	...DateKit,
+	...EmojiKit,
+	...FloatingToolbarKit,
+	...ListKit,
+	...(mdx ? MarkdownKit : MarkdownKitNoMdx),
+	...MathKit,
+	...ShortcutsKit,
+	...SuggestionKit,
+	...TableKit,
+	...TocKit,
+	...UtilsKit,
+]
