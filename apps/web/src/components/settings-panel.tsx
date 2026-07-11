@@ -58,8 +58,10 @@ export function SettingsPanel({
 					<SettingRow
 						title="Auto-save"
 						description="Persist changes to this browser as you type."
+						htmlFor="setting-auto-save"
 					>
 						<Switch
+							id="setting-auto-save"
 							checked={settings.autoSave}
 							onCheckedChange={(checked) =>
 								onChange({ ...settings, autoSave: checked })
