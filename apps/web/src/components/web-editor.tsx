@@ -4,10 +4,8 @@ import { HeadingMinimap } from "@mdit/editor/minimap"
 import { usePlateEditor, type Value } from "@mdit/editor/plate"
 import { EditorSurface } from "@mdit/editor/shared"
 import { createWebEditorKit } from "@mdit/editor/web-kit"
-import { Button } from "@mdit/ui/components/button"
 import { useMemo, useRef } from "react"
 import { useAutosave } from "../hooks/use-autosave"
-import { downloadMarkdown } from "../lib/download"
 import { fileToWebpDataUrl, isImageFile } from "../lib/web-image"
 
 export function WebEditor({
@@ -15,7 +13,6 @@ export function WebEditor({
 	initialMarkdown,
 	onChange,
 	onDirtyChange,
-	onDownloaded,
 	autoSave,
 	autoSaveDelayMs,
 	onPersist,
@@ -27,7 +24,6 @@ export function WebEditor({
 	onChange?: (markdown: string) => void
 	// Called with whether the document currently differs from the saved baseline.
 	onDirtyChange?: (dirty: boolean) => void
-	onDownloaded?: () => void
 	autoSave: boolean
 	autoSaveDelayMs: number
 	onPersist?: (markdown: string) => void
@@ -103,21 +99,6 @@ export function WebEditor({
 				}
 			}}
 		>
-			<Button
-				type="button"
-				className="absolute top-3 right-12 z-40"
-				onClick={() => {
-					const markdown = editor.api.markdown.serialize({
-						value: editor.children as Value,
-					})
-					downloadMarkdown(fileName, markdown)
-					// The downloaded content is now the clean baseline.
-					baseline.current = markdown
-					onDownloaded?.()
-				}}
-			>
-				Download
-			</Button>
 			<EditorSurface
 				editor={editor}
 				onValueChange={handleValueChange}

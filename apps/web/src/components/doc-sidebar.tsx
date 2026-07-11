@@ -1,12 +1,11 @@
 import { cn } from "@mdit/ui/lib/utils"
-import { InboxIcon } from "lucide-react"
+import { FileTextIcon } from "lucide-react"
 import { tabLabel, type WebTab } from "../lib/web-tabs"
 import { DownloadMac } from "./download-mac"
 
-// Left sidebar listing the open documents, mirroring the mdit desktop file
-// explorer's look (dark panel, folder-ish header, one row per open document
-// with the active row highlighted). Purely presentational — the same tab
-// state that drives the top tab bar drives this list.
+// Left sidebar listing the open documents as a floating rounded card (matching
+// the mdit desktop look). Purely presentational — the same tab state that
+// drives the top tab bar drives this list.
 export function DocSidebar({
 	tabs,
 	activeTabId,
@@ -17,12 +16,11 @@ export function DocSidebar({
 	onActivate: (id: string) => void
 }) {
 	return (
-		<div className="flex h-full w-60 shrink-0 flex-col border-border border-r bg-muted/30">
-			<div className="flex h-10 items-center gap-2 px-3 text-muted-foreground text-sm">
-				<InboxIcon className="size-4" aria-hidden />
-				<span className="truncate">Open documents</span>
+		<div className="flex h-full w-64 shrink-0 flex-col gap-1 overflow-hidden rounded-xl border border-border bg-muted/40 p-2 shadow-sm">
+			<div className="px-2 pt-1 pb-1.5 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+				Recents
 			</div>
-			<nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2 pb-2">
+			<nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
 				{tabs.map((tab) => {
 					const isActive = tab.id === activeTabId
 					return (
@@ -32,11 +30,21 @@ export function DocSidebar({
 							aria-current={isActive}
 							onClick={() => onActivate(tab.id)}
 							className={cn(
-								"flex h-8 items-center rounded-md px-2 text-left text-sm transition-colors",
-								"text-muted-foreground hover:bg-muted",
-								isActive && "bg-muted text-foreground",
+								"flex h-8 items-center gap-2 rounded-lg px-2 text-left text-sm transition-colors",
+								isActive
+									? "bg-accent text-accent-foreground"
+									: "text-muted-foreground hover:bg-muted",
 							)}
 						>
+							<FileTextIcon
+								className={cn(
+									"size-3.5 shrink-0",
+									isActive
+										? "text-accent-foreground/70"
+										: "text-muted-foreground/60",
+								)}
+								aria-hidden
+							/>
 							<span className="truncate">{tabLabel(tab)}</span>
 						</button>
 					)

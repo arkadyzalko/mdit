@@ -3,6 +3,7 @@ import { PlateController } from "@mdit/editor/plate"
 import { createFileRoute } from "@tanstack/react-router"
 import { useEffect, useRef, useState } from "react"
 import { DocSidebar } from "../components/doc-sidebar"
+import { DownloadButton } from "../components/download-button"
 import { SettingsButton } from "../components/settings-button"
 import { SettingsPanel } from "../components/settings-panel"
 import { TabStrip } from "../components/tab-strip"
@@ -44,21 +45,26 @@ function Home() {
 		})
 	}
 
+	// Download the active tab's current content and mark it clean. Used by both
+	// Cmd/Ctrl+S and the toolbar Download button.
+	const downloadActiveTab = () => {
+		const active = state.tabs.find((t) => t.id === state.activeTabId)
+		if (!active) return
+		const markdown = markdownByTab.current[active.id] ?? active.initialMarkdown
+		downloadMarkdown(active.name, markdown)
+		setState((s) => setDirty(s, active.id, false))
+	}
+
 	useEffect(() => {
 		const onKeyDown = (e: KeyboardEvent) => {
 			if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
 				e.preventDefault()
-				const active = state.tabs.find((t) => t.id === state.activeTabId)
-				if (!active) return
-				const markdown =
-					markdownByTab.current[active.id] ?? active.initialMarkdown
-				downloadMarkdown(active.name, markdown)
-				setState((s) => setDirty(s, active.id, false))
+				downloadActiveTab()
 			}
 		}
 		window.addEventListener("keydown", onKeyDown)
 		return () => window.removeEventListener("keydown", onKeyDown)
-	}, [state.tabs, state.activeTabId])
+	})
 
 	useEffect(() => {
 		savePersistedTabsState(state, markdownByTab.current)
@@ -82,22 +88,25 @@ function Home() {
 	}
 
 	return (
-		<div className="flex h-screen w-full">
+		<div className="flex h-screen w-full gap-2 bg-background p-2">
 			<DocSidebar
 				tabs={state.tabs}
 				activeTabId={state.activeTabId}
 				onActivate={activate}
 			/>
-			<div className="flex min-w-0 flex-1 flex-col">
-				<div className="flex items-center justify-end gap-1 px-2 pt-1">
-					<SettingsButton onClick={() => setShowSettings(true)} />
-				</div>
+			<div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-background">
 				<TabStrip
 					tabs={state.tabs}
 					activeTabId={state.activeTabId}
 					onActivate={activate}
 					onClose={handleClose}
 					onNew={() => setState(newTab)}
+					actions={
+						<>
+							<DownloadButton onClick={downloadActiveTab} />
+							<SettingsButton onClick={() => setShowSettings(true)} />
+						</>
+					}
 				/>
 				<div
 					className="relative min-h-0 flex-1"
@@ -136,9 +145,6 @@ function Home() {
 											onPersist={(md) => handlePersist(tab.id, md)}
 											onDirtyChange={(dirty) =>
 												setState((s) => setDirty(s, tab.id, dirty))
-											}
-											onDownloaded={() =>
-												setState((s) => setDirty(s, tab.id, false))
 											}
 										/>
 									</EditorDndProvider>
