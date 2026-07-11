@@ -16,6 +16,8 @@ import { insertSlashMenuBelow } from "../slash/insert-slash-menu"
 import { NOTE_TITLE_KEY } from "../title"
 import { getBlockDragHandleContextMenuId } from "./block-menu-ids"
 
+// Headings keep their original tuned top offsets (their tall line boxes were
+// calibrated with these values and look correct on desktop + web).
 const headingTopMap: Record<string, string> = {
 	[KEYS.h1]: "top-13",
 	[KEYS.h2]: "top-7",
@@ -25,19 +27,20 @@ const headingTopMap: Record<string, string> = {
 	[KEYS.h6]: "top-3",
 }
 
-const otherTypeTopMap: Record<string, string> = {
-	[KEYS.codeBlock]: "top-1",
-	[KEYS.table]: "top-5",
-	[KEYS.img]: "top-2",
-	[KEYS.blockquote]: "top-0.5",
-	[KEYS.callout]: "top-0",
-}
+// Non-heading blocks (paragraph, list, todo/checkbox, quote, callout, code,
+// table, image) share the editor's 24px content line, which starts at the
+// block top. Rather than a fixed pixel offset (which left the handle ~5px
+// below the checkbox on list/todo blocks), pin the handle to the block top,
+// make it one line tall, and center its icon so it lands on the first line's
+// center for every non-heading block.
+// Overrides the base `top-1.25 py-0.75` so the icon centers on the 24px line.
+const NON_HEADING_LINE = "top-0! h-6 items-center py-0!"
 
 const getTopClass = (type: string, isFirstChild: boolean) => {
 	if (isFirstChild && headingTopMap[type]) {
 		return "top-1"
 	}
-	return headingTopMap[type] || otherTypeTopMap[type] || ""
+	return headingTopMap[type] ?? NON_HEADING_LINE
 }
 
 export function DragHandle({
