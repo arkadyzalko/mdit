@@ -1,6 +1,8 @@
 import { cn } from "@mdit/ui/lib/utils"
 import { useTocSideBar, useTocSideBarState } from "@platejs/toc/react"
+import { NodeApi } from "platejs"
 import { buildMinimapTicks } from "./minimap-ticks"
+import { smoothScrollIntoView } from "./smooth-scroll"
 
 export type HeadingMinimapProps = {
 	topOffset?: number
@@ -13,14 +15,24 @@ export function HeadingMinimap({
 }: HeadingMinimapProps) {
 	const state = useTocSideBarState({ topOffset })
 	const { navProps, onContentClick } = useTocSideBar(state)
-	const { headingList, activeContentId, mouseInToc } = state
+	const { editor, headingList, activeContentId, mouseInToc } = state
 	const ticks = buildMinimapTicks(headingList, activeContentId ?? "")
 
 	if (ticks.length === 0) return null
 
 	const scrollTo = (e: React.MouseEvent<HTMLElement>, id: string) => {
 		const heading = headingList.find((h) => h.id === id)
-		if (heading) onContentClick(e, heading, "smooth")
+		if (!heading) return
+		// Let the TOC hook update its active state (its own scroll is a no-op
+		// here — native smooth scrolling doesn't move this container).
+		onContentClick(e, heading, "smooth")
+		// Do the actual scroll ourselves: resolve the heading's DOM node and
+		// animate its real scrollable ancestor. This works regardless of which
+		// element overflows (the web editor scrolls PlateContent, not the
+		// registered PlateContainer) and doesn't rely on native smooth scroll.
+		const node = NodeApi.get(editor, heading.path)
+		const el = node && editor.api.toDOMNode(node)
+		if (el) smoothScrollIntoView(el as HTMLElement, { topOffset })
 	}
 
 	return (
