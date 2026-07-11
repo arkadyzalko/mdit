@@ -130,6 +130,9 @@ function Home() {
 											initialMarkdown={tab.initialMarkdown}
 											autoSave={settings.autoSave}
 											autoSaveDelayMs={settings.autoSaveDelayMs}
+											onChange={(md) => {
+												markdownByTab.current[tab.id] = md
+											}}
 											onPersist={(md) => handlePersist(tab.id, md)}
 											onDirtyChange={(dirty) =>
 												setState((s) => setDirty(s, tab.id, dirty))

@@ -13,6 +13,7 @@ import { fileToWebpDataUrl, isImageFile } from "../lib/web-image"
 export function WebEditor({
 	fileName,
 	initialMarkdown,
+	onChange,
 	onDirtyChange,
 	onDownloaded,
 	autoSave,
@@ -21,7 +22,10 @@ export function WebEditor({
 }: {
 	fileName: string
 	initialMarkdown: string
-	// Called with whether the document currently differs from what was loaded.
+	// Live serialized content on every edit (undebounced) — the parent keeps
+	// this so Cmd+S can save the latest content even without an auto-save.
+	onChange?: (markdown: string) => void
+	// Called with whether the document currently differs from the saved baseline.
 	onDirtyChange?: (dirty: boolean) => void
 	onDownloaded?: () => void
 	autoSave: boolean
@@ -51,15 +55,25 @@ export function WebEditor({
 			value: editor.children as Value,
 		})
 	}
-	const scheduleAutosave = useAutosave((markdown) => onPersist?.(markdown), {
-		delayMs: autoSaveDelayMs,
-		enabled: autoSave,
-	})
+	const scheduleAutosave = useAutosave(
+		(markdown) => {
+			// Persisting is a save: the persisted content becomes the new clean
+			// baseline (mirrors the Download button), so a later edit back to this
+			// content reads as clean rather than dirty.
+			baseline.current = markdown
+			onPersist?.(markdown)
+		},
+		{ delayMs: autoSaveDelayMs, enabled: autoSave },
+	)
 
 	const handleValueChange = () => {
 		const current = editor.api.markdown.serialize({
 			value: editor.children as Value,
 		})
+		// Report live content on every change so the parent always has the
+		// up-to-date markdown for Cmd+S — regardless of whether/when the
+		// debounced auto-save fires (or if auto-save is off entirely).
+		onChange?.(current)
 		onDirtyChange?.(current !== baseline.current)
 		scheduleAutosave(current)
 	}
