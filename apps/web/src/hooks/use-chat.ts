@@ -47,8 +47,15 @@ export function useChat(client: AiClient): ChatState {
 				} catch {
 					// aborted or client error: leave whatever streamed so far
 				} finally {
-					abortRef.current = null
-					setIsStreaming(false)
+					// Only clear if this request is still the active one. A
+					// stop()/reset() immediately followed by a new send() installs
+					// a new controller; without this identity check, this aborted
+					// request's finally would wipe the new controller, leaving the
+					// new stream unstoppable and the re-entrancy guard defeated.
+					if (abortRef.current === controller) {
+						abortRef.current = null
+						setIsStreaming(false)
+					}
 				}
 			})()
 		},
