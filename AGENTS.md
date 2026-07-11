@@ -1,5 +1,15 @@
 # Repository Guidelines
 
+## Architecture & Conventions (read before implementing)
+- **Web editor (`apps/web`):** read `docs/architecture/web-editor.md` before
+  changing anything under `apps/web`. It defines the binding patterns — static
+  SPA (no backend), in-memory state (no `@mdit/store`, no filesystem), pure
+  `lib/*` logic + tests, the design-system split (generic primitives →
+  `@mdit/ui`, composition → `apps/web`), the save/dirty/persistence model, the
+  Tauri-free Plate kit, and how code is shared with desktop via `packages/*`.
+- Point-in-time designs live in `docs/superpowers/specs/` and plans in
+  `docs/superpowers/plans/`; the architecture doc above is the durable summary.
+
 ## Build, Test, and Development Commands
 - Run commands from the monorepo root unless noted. Root scripts use `task:scope` names.
 - `pnpm test:desktop` runs `turbo run test --filter=@mdit/desktop`.
