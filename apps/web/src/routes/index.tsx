@@ -61,7 +61,10 @@ function Home() {
 				{state.tabs.map((tab) => {
 					const isActive = tab.id === state.activeTabId
 					return (
-						<div key={tab.id} className={isActive ? "h-full w-full" : "hidden"}>
+						<div
+							key={`${tab.id}:${tab.epoch}`}
+							className={isActive ? "h-full w-full" : "hidden"}
+						>
 							<PlateController>
 								<EditorDndProvider>
 									<WebEditor

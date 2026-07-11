@@ -4,6 +4,11 @@ export type WebTab = {
 	initialMarkdown: string
 	isFile: boolean
 	dirty: boolean
+	// Bumped whenever new content is loaded into this tab (e.g. a file is
+	// dropped onto a reused empty tab). The route includes it in the editor's
+	// React key so reusing a tab remounts the editor with the new content
+	// instead of keeping the stale empty instance.
+	epoch: number
 }
 
 export type WebTabsState = {
@@ -18,6 +23,7 @@ export function createEmptyTab(): WebTab {
 		initialMarkdown: "",
 		isFile: false,
 		dirty: false,
+		epoch: 0,
 	}
 }
 
@@ -50,6 +56,7 @@ export function openFileInTabs(
 							initialMarkdown: file.markdown,
 							isFile: true,
 							dirty: false,
+							epoch: t.epoch + 1,
 						}
 					: t,
 			),
@@ -61,6 +68,7 @@ export function openFileInTabs(
 		initialMarkdown: file.markdown,
 		isFile: true,
 		dirty: false,
+		epoch: 0,
 	}
 	return { tabs: [...state.tabs, tab], activeTabId: tab.id }
 }

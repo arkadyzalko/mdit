@@ -5,7 +5,7 @@ import { usePlateEditor, type Value } from "@mdit/editor/plate"
 import { EditorSurface } from "@mdit/editor/shared"
 import { createWebEditorKit } from "@mdit/editor/web-kit"
 import { Button } from "@mdit/ui/components/button"
-import { useMemo } from "react"
+import { useMemo, useRef } from "react"
 import { downloadMarkdown } from "../lib/download"
 import { fileToWebpDataUrl, isImageFile } from "../lib/web-image"
 
@@ -31,6 +31,17 @@ export function WebEditor({
 	}, [plugins, initialMarkdown, fileName])
 
 	const editor = usePlateEditor({ plugins, value })
+
+	// Plate fires onValueChange once on mount (initial value settle); ignore
+	// that first call so a freshly opened/created tab isn't marked dirty.
+	const hasSettled = useRef(false)
+	const handleValueChange = () => {
+		if (!hasSettled.current) {
+			hasSettled.current = true
+			return
+		}
+		onDirtyChange?.()
+	}
 
 	const insertImageFile = async (file: File) => {
 		const dataUrl = await fileToWebpDataUrl(file)
@@ -72,7 +83,7 @@ export function WebEditor({
 			</Button>
 			<EditorSurface
 				editor={editor}
-				onValueChange={onDirtyChange}
+				onValueChange={handleValueChange}
 				rightRail={<HeadingMinimap />}
 			/>
 		</div>

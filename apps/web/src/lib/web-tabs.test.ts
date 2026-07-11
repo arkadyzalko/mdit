@@ -29,6 +29,14 @@ describe("web-tabs", () => {
 		expect(next.activeTabId).toBe(next.tabs[0].id)
 	})
 
+	it("bumps epoch when reusing a tab so the editor remounts with new content", () => {
+		const s = createInitialTabsState()
+		expect(s.tabs[0].epoch).toBe(0)
+		const next = openFileInTabs(s, { name: "notes.md", markdown: "# Notes" })
+		expect(next.tabs[0].id).toBe(s.tabs[0].id) // same tab (reused)
+		expect(next.tabs[0].epoch).toBe(1) // but epoch bumped → new React key
+	})
+
 	it("opens a dropped file in a new tab when the active tab is a file", () => {
 		let s = createInitialTabsState()
 		s = openFileInTabs(s, { name: "a.md", markdown: "A" })
