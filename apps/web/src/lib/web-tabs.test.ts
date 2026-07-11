@@ -73,6 +73,31 @@ describe("web-tabs", () => {
 		expect(next.activeTabId).toBe(next.tabs[0].id)
 	})
 
+	it("closing a background tab keeps the active tab unchanged", () => {
+		let s = createInitialTabsState()
+		s = openFileInTabs(s, { name: "a.md", markdown: "A" }) // reuse -> [a]
+		s = newTab(s) // [a, untitled] active=untitled
+		const activeId = s.activeTabId
+		const backgroundId = s.tabs[0].id // "a.md", not active
+		const next = closeTab(s, backgroundId)
+		expect(next.tabs).toHaveLength(1)
+		expect(next.tabs[0].name).toBe("Untitled")
+		expect(next.activeTabId).toBe(activeId) // unchanged
+	})
+
+	it("closeTab with an unknown id returns the state unchanged", () => {
+		const s = createInitialTabsState()
+		const next = closeTab(s, "does-not-exist")
+		expect(next).toBe(s)
+	})
+
+	it("setDirty with an unknown id leaves all tabs unchanged", () => {
+		const s = createInitialTabsState()
+		const next = setDirty(s, "does-not-exist", true)
+		expect(next.tabs.every((t) => !t.dirty)).toBe(true)
+		expect(next.activeTabId).toBe(s.activeTabId)
+	})
+
 	it("closing the last tab recreates a fresh empty tab", () => {
 		const s = createInitialTabsState()
 		const next = closeTab(s, s.tabs[0].id)

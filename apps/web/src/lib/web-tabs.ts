@@ -89,7 +89,9 @@ export function closeTab(state: WebTabsState, id: string): WebTabsState {
 
 	let activeTabId = state.activeTabId
 	if (state.activeTabId === id) {
-		const neighbor = remaining[index - 1] ?? remaining[index] ?? remaining[0]
+		// Activate the left neighbor; when closing the leftmost tab there is no
+		// left neighbor, so fall back to the new leftmost (the old right neighbor).
+		const neighbor = remaining[index - 1] ?? remaining[0]
 		activeTabId = neighbor.id
 	}
 	return { tabs: remaining, activeTabId }
