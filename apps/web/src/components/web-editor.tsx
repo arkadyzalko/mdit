@@ -6,6 +6,7 @@ import { EditorSurface } from "@mdit/editor/shared"
 import { createWebEditorKit } from "@mdit/editor/web-kit"
 import { Button } from "@mdit/ui/components/button"
 import { useMemo, useRef } from "react"
+import { useAutosave } from "../hooks/use-autosave"
 import { downloadMarkdown } from "../lib/download"
 import { fileToWebpDataUrl, isImageFile } from "../lib/web-image"
 
@@ -14,12 +15,18 @@ export function WebEditor({
 	initialMarkdown,
 	onDirtyChange,
 	onDownloaded,
+	autoSave,
+	autoSaveDelayMs,
+	onPersist,
 }: {
 	fileName: string
 	initialMarkdown: string
 	// Called with whether the document currently differs from what was loaded.
 	onDirtyChange?: (dirty: boolean) => void
 	onDownloaded?: () => void
+	autoSave: boolean
+	autoSaveDelayMs: number
+	onPersist?: (markdown: string) => void
 }) {
 	const plugins = useMemo(() => createWebEditorKit(), [])
 
@@ -44,11 +51,17 @@ export function WebEditor({
 			value: editor.children as Value,
 		})
 	}
+	const scheduleAutosave = useAutosave((markdown) => onPersist?.(markdown), {
+		delayMs: autoSaveDelayMs,
+		enabled: autoSave,
+	})
+
 	const handleValueChange = () => {
 		const current = editor.api.markdown.serialize({
 			value: editor.children as Value,
 		})
 		onDirtyChange?.(current !== baseline.current)
+		scheduleAutosave(current)
 	}
 
 	const insertImageFile = async (file: File) => {
