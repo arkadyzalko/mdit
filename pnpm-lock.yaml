@@ -330,6 +330,9 @@ importers:
       lucide-react:
         specifier: ^0.539.0
         version: 0.539.0(react@19.2.4)
+      motion:
+        specifier: ^12.34.2
+        version: 12.34.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       platejs:
         specifier: ^53.0.5
         version: 53.0.5(@types/react@19.2.14)(immer@10.2.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.4))
