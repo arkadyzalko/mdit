@@ -1,0 +1,78 @@
+name: Deploy web editor to GitHub Pages
+
+on:
+  # Deploy on pushes to main that touch the web app or the editor package.
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - "packages/editor/**"
+      - "packages/ui/**"
+      - ".github/workflows/deploy-web.yml"
+  # Allow manual runs from the Actions tab.
+  workflow_dispatch:
+
+# Allow the workflow to publish to Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time; don't cancel an in-progress deploy.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web (static SPA)
+        # base path must match the repository name so assets resolve under
+        # https://<user>.github.io/<repo>/
+        env:
+          GH_PAGES_BASE: /${{ github.event.repository.name }}/
+        run: pnpm --filter @mdit/web build
+
+      - name: Prepare static site
+        # GitHub Pages serves index.html at the root and 404.html for any
+        # unknown path; both point at the prerendered SPA shell so client-side
+        # routing works.
+        run: |
+          cd apps/web/dist/client
+          cp _shell.html index.html
+          cp _shell.html 404.html
+          # Disable Jekyll so files/folders starting with "_" are served as-is.
+          touch .nojekyll
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/web/dist/client
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
