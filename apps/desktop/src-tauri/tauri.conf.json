@@ -61,7 +61,7 @@
 		"updater": {
 			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENBMEQ4QjFFMERCQ0NCQTYKUldTbXk3d05Ib3NOeW1EaElLZmFCSnBscStTR0tYOTZBZHRmbExKMWNuWkZuNTJnekwrZGZuVm0K",
 			"endpoints": [
-				"https://github.com/hjinco/mdit/releases/latest/download/latest.json"
+				"https://github.com/arkadyzalko/mdit/releases/latest/download/latest.json"
 			]
 		}
 	}
