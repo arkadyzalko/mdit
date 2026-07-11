@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import {
 	resolveBulletedListStyleByIndent,
 	resolveListStyleTypeByIndent,
+	resolveOrderedListStyleByIndent,
 } from "./list-style-utils"
 
 describe("list-style-utils", () => {
@@ -23,8 +24,21 @@ describe("list-style-utils", () => {
 		expect(resolveBulletedListStyleByIndent(Number.NaN)).toBe("disc")
 	})
 
-	it("keeps non-bulleted list styles unchanged", () => {
-		expect(resolveListStyleTypeByIndent("decimal", 3)).toBe("decimal")
+	it("cycles ordered list styles decimal → lower-alpha → lower-roman by indent", () => {
+		expect(resolveOrderedListStyleByIndent(1)).toBe("decimal")
+		expect(resolveOrderedListStyleByIndent(2)).toBe("lower-alpha")
+		expect(resolveOrderedListStyleByIndent(3)).toBe("lower-roman")
+		expect(resolveOrderedListStyleByIndent(4)).toBe("decimal")
+		expect(resolveOrderedListStyleByIndent()).toBe("decimal")
+	})
+
+	it("resolves ordered lists through the top-level resolver", () => {
+		expect(resolveListStyleTypeByIndent("decimal", 1)).toBe("decimal")
+		expect(resolveListStyleTypeByIndent("decimal", 2)).toBe("lower-alpha")
+		expect(resolveListStyleTypeByIndent("decimal", 3)).toBe("lower-roman")
+	})
+
+	it("keeps other list styles (e.g. todo) unchanged", () => {
 		expect(resolveListStyleTypeByIndent("todo", 3)).toBe("todo")
 	})
 })
