@@ -45,6 +45,17 @@ externally-hosted function; the static deploy must keep working without it.
    plain CommonMark + GFM readable by other viewers. Always use the existing
    `@mdit/editor/markdown` serializer/deserializer; never write a new one.
 
+5. **Web and desktop must look identical for shared UI.** Chrome that appears in
+   both apps (tabs, sidebar rows, toolbars) uses ONE presentational primitive in
+   `@mdit/ui`, consumed by both. Precedent: `@mdit/ui/components/tab-bar.tsx`
+   (`TabBar`) is the single macOS-style tab component; the web `TabStrip` and the
+   desktop `TabStrip` are thin wrappers that map their own state (web props /
+   desktop store, numeric ids → strings) into `TabBarItem`s. When restyling
+   shared chrome, change the `@mdit/ui` primitive so both apps move together —
+   never fork the visual into one app. Desktop changes can't be visually verified
+   from the web dev harness, so verify types/tests and have a human run the Tauri
+   app for a visual check.
+
 ## Layering (where code goes)
 
 ```
