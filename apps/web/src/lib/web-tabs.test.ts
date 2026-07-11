@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest"
 import {
 	closeTab,
 	createInitialTabsState,
+	fromPersisted,
 	isTabEmpty,
 	newTab,
 	openFileInTabs,
 	setDirty,
+	toPersisted,
 } from "./web-tabs"
 
 describe("web-tabs", () => {
@@ -115,5 +117,47 @@ describe("web-tabs", () => {
 		const next = setDirty(s, first, true)
 		expect(next.tabs[0].dirty).toBe(true)
 		expect(next.tabs[1].dirty).toBe(false)
+	})
+
+	it("toPersisted captures current markdown per tab and the active id", () => {
+		let s = createInitialTabsState()
+		s = openFileInTabs(s, { name: "a.md", markdown: "A" }) // reuse -> [a]
+		s = newTab(s) // [a, untitled] active=untitled
+		const p = toPersisted(s, { [s.tabs[0].id]: "A-edited" })
+		expect(p.activeTabId).toBe(s.activeTabId)
+		expect(p.tabs).toHaveLength(2)
+		expect(p.tabs[0]).toMatchObject({
+			name: "a.md",
+			markdown: "A-edited",
+			isFile: true,
+		})
+		// tab without an entry in markdownByTab falls back to its initialMarkdown
+		expect(p.tabs[1].markdown).toBe("")
+	})
+
+	it("fromPersisted rebuilds clean tabs with markdown as initial content", () => {
+		const p = {
+			tabs: [
+				{ id: "x", name: "n.md", markdown: "# N", isFile: true, epoch: 2 },
+			],
+			activeTabId: "x",
+		}
+		const s = fromPersisted(p)
+		expect(s.tabs).toHaveLength(1)
+		expect(s.tabs[0]).toMatchObject({
+			id: "x",
+			name: "n.md",
+			initialMarkdown: "# N",
+			isFile: true,
+			dirty: false,
+			epoch: 2,
+		})
+		expect(s.activeTabId).toBe("x")
+	})
+
+	it("fromPersisted with no tabs returns a fresh initial state", () => {
+		const s = fromPersisted({ tabs: [], activeTabId: "" })
+		expect(s.tabs).toHaveLength(1)
+		expect(s.tabs[0].isFile).toBe(false)
 	})
 })

@@ -113,3 +113,47 @@ export function setDirty(
 		tabs: state.tabs.map((t) => (t.id === id ? { ...t, dirty } : t)),
 	}
 }
+
+export type PersistedTab = {
+	id: string
+	name: string
+	markdown: string
+	isFile: boolean
+	epoch: number
+}
+
+export type PersistedTabsState = {
+	tabs: PersistedTab[]
+	activeTabId: string
+}
+
+export function toPersisted(
+	state: WebTabsState,
+	markdownByTab: Record<string, string>,
+): PersistedTabsState {
+	return {
+		activeTabId: state.activeTabId,
+		tabs: state.tabs.map((t) => ({
+			id: t.id,
+			name: t.name,
+			markdown: markdownByTab[t.id] ?? t.initialMarkdown,
+			isFile: t.isFile,
+			epoch: t.epoch,
+		})),
+	}
+}
+
+export function fromPersisted(p: PersistedTabsState): WebTabsState {
+	if (p.tabs.length === 0) return createInitialTabsState()
+	return {
+		activeTabId: p.activeTabId,
+		tabs: p.tabs.map((t) => ({
+			id: t.id,
+			name: t.name,
+			initialMarkdown: t.markdown,
+			isFile: t.isFile,
+			dirty: false,
+			epoch: t.epoch,
+		})),
+	}
+}
