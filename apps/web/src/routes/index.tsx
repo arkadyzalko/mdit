@@ -67,6 +67,10 @@ function Home() {
 					}}
 					onDragOver={(e) => e.preventDefault()}
 				>
+					{/* Every open tab stays mounted (inactive ones hidden) so each
+					    editor keeps its content/undo state when switching. Each tab is
+					    a full Plate editor instance, so live editor count grows with
+					    open tabs — fine for typical single-user sessions. */}
 					{state.tabs.map((tab) => {
 						const isActive = tab.id === state.activeTabId
 						return (
