@@ -12,9 +12,13 @@ import { fileToWebpDataUrl, isImageFile } from "../lib/web-image"
 export function WebEditor({
 	fileName,
 	initialMarkdown,
+	onDirtyChange,
+	onDownloaded,
 }: {
 	fileName: string
 	initialMarkdown: string
+	onDirtyChange?: () => void
+	onDownloaded?: () => void
 }) {
 	const plugins = useMemo(() => createWebEditorKit(), [])
 
@@ -35,7 +39,7 @@ export function WebEditor({
 
 	return (
 		<div
-			className="relative h-screen w-full"
+			className="relative h-full w-full"
 			data-editor-scroll-root
 			onPaste={(e) => {
 				const file = Array.from(e.clipboardData.files)[0]
@@ -48,6 +52,7 @@ export function WebEditor({
 				const file = Array.from(e.dataTransfer.files)[0]
 				if (file && isImageFile(file)) {
 					e.preventDefault()
+					e.stopPropagation()
 					void insertImageFile(file)
 				}
 			}}
@@ -55,16 +60,21 @@ export function WebEditor({
 			<Button
 				type="button"
 				className="absolute top-3 right-12 z-40"
-				onClick={() =>
+				onClick={() => {
 					downloadMarkdown(
 						fileName,
 						editor.api.markdown.serialize({ value: editor.children as Value }),
 					)
-				}
+					onDownloaded?.()
+				}}
 			>
 				Download
 			</Button>
-			<EditorSurface editor={editor} rightRail={<HeadingMinimap />} />
+			<EditorSurface
+				editor={editor}
+				onValueChange={onDirtyChange}
+				rightRail={<HeadingMinimap />}
+			/>
 		</div>
 	)
 }
