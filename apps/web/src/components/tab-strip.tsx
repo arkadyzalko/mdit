@@ -2,7 +2,7 @@ import { cn } from "@mdit/ui/lib/utils"
 import { PlusIcon, XIcon } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import type { MouseEvent } from "react"
-import type { WebTab } from "../lib/web-tabs"
+import { tabLabel, type WebTab } from "../lib/web-tabs"
 
 const spring = {
 	type: "spring" as const,
@@ -59,7 +59,7 @@ export function TabStrip({
 								transition={{ layout: spring, opacity: spring, x: spring }}
 							>
 								<div className="flex-1 truncate pr-1 pl-2 text-left">
-									{tab.dirty ? `${tab.name} •` : tab.name}
+									{tabLabel(tab)}
 								</div>
 								<div
 									className={cn(

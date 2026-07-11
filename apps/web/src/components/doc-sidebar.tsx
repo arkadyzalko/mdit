@@ -1,6 +1,7 @@
 import { cn } from "@mdit/ui/lib/utils"
 import { InboxIcon } from "lucide-react"
-import type { WebTab } from "../lib/web-tabs"
+import { tabLabel, type WebTab } from "../lib/web-tabs"
+import { DownloadMac } from "./download-mac"
 
 // Left sidebar listing the open documents, mirroring the mdit desktop file
 // explorer's look (dark panel, folder-ish header, one row per open document
@@ -36,13 +37,12 @@ export function DocSidebar({
 								isActive && "bg-muted text-foreground",
 							)}
 						>
-							<span className="truncate">
-								{tab.dirty ? `${tab.name} •` : tab.name}
-							</span>
+							<span className="truncate">{tabLabel(tab)}</span>
 						</button>
 					)
 				})}
 			</nav>
+			<DownloadMac />
 		</div>
 	)
 }

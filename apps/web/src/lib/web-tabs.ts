@@ -36,6 +36,12 @@ export function isTabEmpty(tab: WebTab): boolean {
 	return !tab.isFile && !tab.dirty
 }
 
+// Display label for a tab: appends a dot when it has unsaved changes. Shared by
+// the tab strip and the sidebar so the "•" convention lives in one place.
+export function tabLabel(tab: WebTab): string {
+	return tab.dirty ? `${tab.name} •` : tab.name
+}
+
 function activeTab(state: WebTabsState): WebTab | undefined {
 	return state.tabs.find((t) => t.id === state.activeTabId)
 }
