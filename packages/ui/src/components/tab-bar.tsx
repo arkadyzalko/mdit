@@ -72,7 +72,9 @@ export function TabBar({
 									onClose(tab.id)
 								}}
 								className={cn(
-									"group/tab relative flex h-9 min-w-24 max-w-52 flex-1 basis-0 cursor-pointer items-center gap-1.5 overflow-hidden rounded-t-lg pr-2 pl-2.5 text-sm transition-colors",
+									// Fixed width + shrink-0 so many tabs scroll horizontally
+									// instead of squishing into unreadable slivers.
+									"group/tab relative flex h-9 w-44 shrink-0 cursor-pointer items-center gap-1.5 overflow-hidden rounded-t-lg pr-2 pl-2.5 text-sm transition-colors",
 									isActive
 										? "bg-background text-foreground"
 										: "bg-transparent text-muted-foreground hover:bg-background/40",
