@@ -1,3 +1,4 @@
+import { EditorDndProvider } from "@mdit/editor/dnd"
 import { PlateController } from "@mdit/editor/plate"
 import { createFileRoute } from "@tanstack/react-router"
 import { useState } from "react"
@@ -17,7 +18,9 @@ function Home() {
 	return (
 		<PlateController>
 			{file ? (
-				<WebEditor fileName={file.name} initialMarkdown={file.markdown} />
+				<EditorDndProvider>
+					<WebEditor fileName={file.name} initialMarkdown={file.markdown} />
+				</EditorDndProvider>
 			) : (
 				<DropZone onFile={(name, markdown) => setFile({ name, markdown })} />
 			)}

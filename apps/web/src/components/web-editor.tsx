@@ -36,6 +36,7 @@ export function WebEditor({
 	return (
 		<div
 			className="relative h-screen w-full"
+			data-editor-scroll-root
 			onPaste={(e) => {
 				const file = Array.from(e.clipboardData.files)[0]
 				if (file && isImageFile(file)) {

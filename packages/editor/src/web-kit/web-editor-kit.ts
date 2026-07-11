@@ -17,7 +17,12 @@ import {
 } from "@mdit/editor/markdown"
 import { MathKit } from "@mdit/editor/math"
 import { createMediaKit } from "@mdit/editor/media"
-import { CursorOverlayKit, FloatingToolbarKit } from "@mdit/editor/selection"
+import {
+	BlockSelectionKit,
+	CursorOverlayKit,
+	DndKit,
+	FloatingToolbarKit,
+} from "@mdit/editor/selection"
 import { createSlashKit } from "@mdit/editor/slash"
 import { SuggestionKit } from "@mdit/editor/suggestion"
 import { TableKit } from "@mdit/editor/table"
@@ -34,9 +39,11 @@ export const createWebEditorKit = ({
 	...AutoformatKit,
 	...BasicBlocksKit,
 	...BasicMarksKit,
+	...BlockSelectionKit,
 	...CalloutKit,
 	...CodeBlockKit,
 	...CursorOverlayKit,
+	...DndKit,
 	...DateKit,
 	...EmojiKit,
 	...FloatingToolbarKit,

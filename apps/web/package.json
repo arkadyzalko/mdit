@@ -11,6 +11,7 @@
 		"ts:check": "tsgo --noEmit"
 	},
 	"dependencies": {
+		"@dnd-kit/react": "^0.1.21",
 		"@mdit/editor": "workspace:*",
 		"@mdit/ui": "workspace:*",
 		"@platejs/toc": "^53.0.0",

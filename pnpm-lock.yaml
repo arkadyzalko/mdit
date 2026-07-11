@@ -309,6 +309,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@dnd-kit/react':
+        specifier: ^0.1.21
+        version: 0.1.21(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@mdit/editor':
         specifier: workspace:*
         version: link:../../packages/editor

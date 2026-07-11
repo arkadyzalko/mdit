@@ -9,6 +9,7 @@
 		"./callout": "./src/callout/index.ts",
 		"./code": "./src/code/index.ts",
 		"./date": "./src/date/index.ts",
+		"./dnd": "./src/dnd/index.ts",
 		"./emoji": "./src/emoji/index.ts",
 		"./frontmatter": "./src/frontmatter/index.ts",
 		"./link": "./src/link/index.ts",
