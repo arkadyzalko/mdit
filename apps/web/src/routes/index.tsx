@@ -1,10 +1,18 @@
 import { EditorDndProvider } from "@mdit/editor/dnd"
 import { PlateController } from "@mdit/editor/plate"
 import { createFileRoute } from "@tanstack/react-router"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { DocSidebar } from "../components/doc-sidebar"
+import { SettingsButton } from "../components/settings-button"
+import { SettingsPanel } from "../components/settings-panel"
 import { TabStrip } from "../components/tab-strip"
 import { WebEditor } from "../components/web-editor"
+import { useSettings } from "../hooks/use-settings"
+import { downloadMarkdown } from "../lib/download"
+import {
+	loadPersistedTabsState,
+	savePersistedTabsState,
+} from "../lib/persist-tabs"
 import { isImageFile } from "../lib/web-image"
 import {
 	closeTab,
@@ -20,7 +28,41 @@ export const Route = createFileRoute("/")({
 })
 
 function Home() {
-	const [state, setState] = useState(createInitialTabsState)
+	const [state, setState] = useState(
+		() => loadPersistedTabsState() ?? createInitialTabsState(),
+	)
+	const { settings, setSettings } = useSettings()
+	const markdownByTab = useRef<Record<string, string>>({})
+	const [showSettings, setShowSettings] = useState(false)
+
+	const handlePersist = (id: string, markdown: string) => {
+		markdownByTab.current[id] = markdown
+		setState((s) => {
+			const next = setDirty(s, id, false)
+			savePersistedTabsState(next, markdownByTab.current)
+			return next
+		})
+	}
+
+	useEffect(() => {
+		const onKeyDown = (e: KeyboardEvent) => {
+			if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
+				e.preventDefault()
+				const active = state.tabs.find((t) => t.id === state.activeTabId)
+				if (!active) return
+				const markdown =
+					markdownByTab.current[active.id] ?? active.initialMarkdown
+				downloadMarkdown(active.name, markdown)
+				setState((s) => setDirty(s, active.id, false))
+			}
+		}
+		window.addEventListener("keydown", onKeyDown)
+		return () => window.removeEventListener("keydown", onKeyDown)
+	}, [state.tabs, state.activeTabId])
+
+	useEffect(() => {
+		savePersistedTabsState(state, markdownByTab.current)
+	}, [state])
 
 	const openMarkdownFile = async (file: File) => {
 		const markdown = await file.text()
@@ -47,6 +89,9 @@ function Home() {
 				onActivate={activate}
 			/>
 			<div className="flex min-w-0 flex-1 flex-col">
+				<div className="flex items-center justify-end gap-1 px-2 pt-1">
+					<SettingsButton onClick={() => setShowSettings(true)} />
+				</div>
 				<TabStrip
 					tabs={state.tabs}
 					activeTabId={state.activeTabId}
@@ -83,6 +128,9 @@ function Home() {
 										<WebEditor
 											fileName={tab.name}
 											initialMarkdown={tab.initialMarkdown}
+											autoSave={settings.autoSave}
+											autoSaveDelayMs={settings.autoSaveDelayMs}
+											onPersist={(md) => handlePersist(tab.id, md)}
 											onDirtyChange={(dirty) =>
 												setState((s) => setDirty(s, tab.id, dirty))
 											}
@@ -97,6 +145,13 @@ function Home() {
 					})}
 				</div>
 			</div>
+			{showSettings ? (
+				<SettingsPanel
+					settings={settings}
+					onChange={setSettings}
+					onClose={() => setShowSettings(false)}
+				/>
+			) : null}
 		</div>
 	)
 }

@@ -9,6 +9,7 @@ import {
 import { SettingRow } from "@mdit/ui/components/setting-row"
 import { Switch } from "@mdit/ui/components/switch"
 import { ArrowLeftIcon } from "lucide-react"
+import { useEffect } from "react"
 import { AUTO_SAVE_DELAYS, type WebSettings } from "../lib/settings"
 
 const delayLabel = (ms: number) => `${ms / 1000}s`
@@ -22,6 +23,14 @@ export function SettingsPanel({
 	onChange: (s: WebSettings) => void
 	onClose: () => void
 }) {
+	useEffect(() => {
+		const onKeyDown = (e: KeyboardEvent) => {
+			if (e.key === "Escape") onClose()
+		}
+		window.addEventListener("keydown", onKeyDown)
+		return () => window.removeEventListener("keydown", onKeyDown)
+	}, [onClose])
+
 	return (
 		<div className="fixed inset-0 z-50 flex bg-background">
 			{/* Left: section list */}
