@@ -79,8 +79,8 @@ function Home() {
 										<WebEditor
 											fileName={tab.name}
 											initialMarkdown={tab.initialMarkdown}
-											onDirtyChange={() =>
-												setState((s) => setDirty(s, tab.id, true))
+											onDirtyChange={(dirty) =>
+												setState((s) => setDirty(s, tab.id, dirty))
 											}
 											onDownloaded={() =>
 												setState((s) => setDirty(s, tab.id, false))

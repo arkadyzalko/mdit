@@ -17,7 +17,8 @@ export function WebEditor({
 }: {
 	fileName: string
 	initialMarkdown: string
-	onDirtyChange?: () => void
+	// Called with whether the document currently differs from what was loaded.
+	onDirtyChange?: (dirty: boolean) => void
 	onDownloaded?: () => void
 }) {
 	const plugins = useMemo(() => createWebEditorKit(), [])
@@ -32,15 +33,22 @@ export function WebEditor({
 
 	const editor = usePlateEditor({ plugins, value })
 
-	// Plate fires onValueChange once on mount (initial value settle); ignore
-	// that first call so a freshly opened/created tab isn't marked dirty.
-	const hasSettled = useRef(false)
+	// Baseline to compare against: the editor's serialization of the document as
+	// loaded. Comparing serialized content (rather than counting onValueChange
+	// calls) means spurious change events on mount don't mark the tab dirty, and
+	// editing back to the original clears it. Computed lazily once from the
+	// initial editor state so it reflects exactly what the editor round-trips.
+	const baseline = useRef<string | null>(null)
+	if (baseline.current === null) {
+		baseline.current = editor.api.markdown.serialize({
+			value: editor.children as Value,
+		})
+	}
 	const handleValueChange = () => {
-		if (!hasSettled.current) {
-			hasSettled.current = true
-			return
-		}
-		onDirtyChange?.()
+		const current = editor.api.markdown.serialize({
+			value: editor.children as Value,
+		})
+		onDirtyChange?.(current !== baseline.current)
 	}
 
 	const insertImageFile = async (file: File) => {
@@ -72,10 +80,12 @@ export function WebEditor({
 				type="button"
 				className="absolute top-3 right-12 z-40"
 				onClick={() => {
-					downloadMarkdown(
-						fileName,
-						editor.api.markdown.serialize({ value: editor.children as Value }),
-					)
+					const markdown = editor.api.markdown.serialize({
+						value: editor.children as Value,
+					})
+					downloadMarkdown(fileName, markdown)
+					// The downloaded content is now the clean baseline.
+					baseline.current = markdown
 					onDownloaded?.()
 				}}
 			>
