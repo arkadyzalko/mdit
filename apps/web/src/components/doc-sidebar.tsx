@@ -7,7 +7,7 @@ import { DownloadMac } from "./download-mac"
 import { SettingsContent } from "./settings-content"
 
 const RECENTS_WIDTH = 256
-const SETTINGS_WIDTH = 360
+const SETTINGS_WIDTH = 420
 
 // Left sidebar as a floating rounded card (matching the mdit desktop look).
 // It hosts two modes in the SAME card: the recent-documents list and the
