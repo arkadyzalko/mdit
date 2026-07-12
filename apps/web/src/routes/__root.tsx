@@ -7,15 +7,18 @@ import {
 	Scripts,
 } from "@tanstack/react-router"
 import type { ReactNode } from "react"
-import { ThemeToggle } from "../components/theme-toggle"
 import appCss from "../styles/globals.css?url"
 
 // Set the theme class before paint to avoid a flash of the wrong theme.
+// Honors the persisted preference (light/dark/system); falls back to system.
 const themeInitScript = `
 try {
-	if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-		document.documentElement.classList.add('dark')
-	}
+	var stored = null
+	try { stored = JSON.parse(localStorage.getItem('mdit.web.settings') || 'null') } catch (_) {}
+	var pref = stored && stored.theme ? stored.theme : 'system'
+	var dark = pref === 'dark' ||
+		(pref !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+	if (dark) document.documentElement.classList.add('dark')
 } catch (_) {}
 `
 
@@ -34,7 +37,6 @@ export const Route = createRootRoute({
 function RootComponent() {
 	return (
 		<RootDocument>
-			<ThemeToggle />
 			<Outlet />
 		</RootDocument>
 	)

@@ -12,6 +12,7 @@ import { TabStrip } from "../components/tab-strip"
 import { WebEditor } from "../components/web-editor"
 import { AiClientProvider } from "../hooks/use-ai-client"
 import { useSettings } from "../hooks/use-settings"
+import { useTheme } from "../hooks/use-theme"
 import { downloadMarkdown } from "../lib/download"
 import {
 	loadPersistedTabsState,
@@ -36,6 +37,7 @@ function Home() {
 		() => loadPersistedTabsState() ?? createInitialTabsState(),
 	)
 	const { settings, setSettings } = useSettings()
+	useTheme(settings.theme)
 	const markdownByTab = useRef<Record<string, string>>({})
 	const [showSettings, setShowSettings] = useState(false)
 	const [showAi, setShowAi] = useState(false)
