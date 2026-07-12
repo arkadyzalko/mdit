@@ -7,7 +7,6 @@ import { AiPanelToggle } from "../components/ai-panel-toggle"
 import { DocSidebar } from "../components/doc-sidebar"
 import { DownloadButton } from "../components/download-button"
 import { SettingsButton } from "../components/settings-button"
-import { SettingsPanel } from "../components/settings-panel"
 import { TabStrip } from "../components/tab-strip"
 import { WebEditor } from "../components/web-editor"
 import { AiClientProvider } from "../hooks/use-ai-client"
@@ -67,6 +66,9 @@ function Home() {
 				e.preventDefault()
 				downloadActiveTab()
 			}
+			if (e.key === "Escape" && showSettings) {
+				setShowSettings(false)
+			}
 		}
 		window.addEventListener("keydown", onKeyDown)
 		return () => window.removeEventListener("keydown", onKeyDown)
@@ -100,6 +102,10 @@ function Home() {
 					tabs={state.tabs}
 					activeTabId={state.activeTabId}
 					onActivate={activate}
+					showSettings={showSettings}
+					settings={settings}
+					onChangeSettings={setSettings}
+					onCloseSettings={() => setShowSettings(false)}
 				/>
 				<div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-background">
 					<TabStrip
@@ -166,13 +172,6 @@ function Home() {
 					</div>
 				</div>
 				{showAi ? <AiPanel onClose={() => setShowAi(false)} /> : null}
-				{showSettings ? (
-					<SettingsPanel
-						settings={settings}
-						onChange={setSettings}
-						onClose={() => setShowSettings(false)}
-					/>
-				) : null}
 			</div>
 		</AiClientProvider>
 	)

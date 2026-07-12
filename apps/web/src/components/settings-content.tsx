@@ -1,4 +1,3 @@
-import { Button } from "@mdit/ui/components/button"
 import {
 	Select,
 	SelectContent,
@@ -9,7 +8,6 @@ import {
 import { SettingRow } from "@mdit/ui/components/setting-row"
 import { Switch } from "@mdit/ui/components/switch"
 import { ArrowLeftIcon } from "lucide-react"
-import { useEffect } from "react"
 import {
 	AUTO_SAVE_DELAYS,
 	THEMES,
@@ -25,7 +23,9 @@ const themeLabel: Record<ThemePreference, string> = {
 	system: "System",
 }
 
-export function SettingsPanel({
+// The settings form, sized to live inside the (expanded) sidebar card.
+// Presentational — state is owned by the caller.
+export function SettingsContent({
 	settings,
 	onChange,
 	onClose,
@@ -34,39 +34,20 @@ export function SettingsPanel({
 	onChange: (s: WebSettings) => void
 	onClose: () => void
 }) {
-	useEffect(() => {
-		const onKeyDown = (e: KeyboardEvent) => {
-			if (e.key === "Escape") onClose()
-		}
-		window.addEventListener("keydown", onKeyDown)
-		return () => window.removeEventListener("keydown", onKeyDown)
-	}, [onClose])
-
 	return (
-		<div className="fixed inset-0 z-50 flex bg-background">
-			{/* Left: section list */}
-			<div className="flex w-60 shrink-0 flex-col border-border border-r bg-muted/30 p-2">
-				<Button
-					type="button"
-					variant="ghost"
-					className="mb-2 justify-start gap-2"
-					onClick={onClose}
-				>
-					<ArrowLeftIcon className="size-4" />
-					Back to app
-				</Button>
-				<div className="rounded-md bg-muted px-2 py-1.5 font-medium text-foreground text-sm">
-					Appearance
-				</div>
-				<div className="rounded-md px-2 py-1.5 font-medium text-muted-foreground text-sm">
-					Editor
-				</div>
-			</div>
-			{/* Right: content */}
-			<div className="min-w-0 flex-1 overflow-y-auto p-8">
-				<h1 className="font-semibold text-foreground text-xl">Appearance</h1>
-				<p className="mt-1 text-muted-foreground text-sm">How the app looks.</p>
-				<div className="mt-6 max-w-xl divide-y divide-border">
+		<div className="flex h-full min-h-0 flex-col">
+			<button
+				type="button"
+				onClick={onClose}
+				className="mb-1 flex h-8 w-full items-center gap-2 rounded-lg px-2 text-left font-medium text-muted-foreground text-sm transition-colors hover:bg-muted"
+			>
+				<ArrowLeftIcon className="size-4 shrink-0" />
+				Back to app
+			</button>
+
+			<div className="min-h-0 flex-1 overflow-y-auto px-1 pt-2">
+				<h2 className="font-semibold text-foreground text-sm">Appearance</h2>
+				<div className="mt-2">
 					<SettingRow
 						title="Theme"
 						description="Follow your system or force light or dark."
@@ -77,7 +58,7 @@ export function SettingsPanel({
 								onChange({ ...settings, theme: v as ThemePreference })
 							}
 						>
-							<SelectTrigger className="w-32">
+							<SelectTrigger className="w-28">
 								<SelectValue>
 									{(value) => themeLabel[value as ThemePreference]}
 								</SelectValue>
@@ -93,11 +74,8 @@ export function SettingsPanel({
 					</SettingRow>
 				</div>
 
-				<h1 className="mt-10 font-semibold text-foreground text-xl">Editor</h1>
-				<p className="mt-1 text-muted-foreground text-sm">
-					How the editor saves your work.
-				</p>
-				<div className="mt-6 max-w-xl divide-y divide-border">
+				<h2 className="mt-6 font-semibold text-foreground text-sm">Editor</h2>
+				<div className="mt-2 divide-y divide-border">
 					<SettingRow
 						title="Auto-save"
 						description="Persist changes to this browser as you type."
@@ -122,7 +100,7 @@ export function SettingsPanel({
 									onChange({ ...settings, autoSaveDelayMs: Number(v) })
 								}
 							>
-								<SelectTrigger className="w-28">
+								<SelectTrigger className="w-24">
 									<SelectValue>
 										{(value) => delayLabel(Number(value))}
 									</SelectValue>
