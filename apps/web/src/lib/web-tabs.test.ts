@@ -1,163 +1,68 @@
+// @vitest-environment node
 import { describe, expect, it } from "vitest"
 import {
+	activate,
 	closeTab,
-	createInitialTabsState,
-	fromPersisted,
-	isTabEmpty,
-	newTab,
-	openFileInTabs,
-	setDirty,
-	toPersisted,
+	closeTabsForNodes,
+	createEmptyTabsState,
+	openNode,
+	setTabDirty,
+	tabLabel,
 } from "./web-tabs"
 
-describe("web-tabs", () => {
-	it("starts with a single empty Untitled tab", () => {
-		const s = createInitialTabsState()
-		expect(s.tabs).toHaveLength(1)
-		expect(s.tabs[0].name).toBe("Untitled")
-		expect(s.tabs[0].isFile).toBe(false)
-		expect(s.tabs[0].dirty).toBe(false)
-		expect(s.activeTabId).toBe(s.tabs[0].id)
-		expect(isTabEmpty(s.tabs[0])).toBe(true)
+describe("tabs as node references", () => {
+	it("starts empty", () => {
+		const s = createEmptyTabsState()
+		expect(s.openTabIds).toEqual([])
+		expect(s.activeTabId).toBe(null)
 	})
 
-	it("opens a dropped file into the active empty tab (reuse)", () => {
-		const s = createInitialTabsState()
-		const next = openFileInTabs(s, { name: "notes.md", markdown: "# Notes" })
-		expect(next.tabs).toHaveLength(1)
-		expect(next.tabs[0].name).toBe("notes.md")
-		expect(next.tabs[0].isFile).toBe(true)
-		expect(next.tabs[0].initialMarkdown).toBe("# Notes")
-		expect(next.activeTabId).toBe(next.tabs[0].id)
+	it("opens a node and activates it; re-opening focuses without duplicating", () => {
+		let s = openNode(createEmptyTabsState(), "a")
+		s = openNode(s, "b")
+		expect(s.openTabIds).toEqual(["a", "b"])
+		expect(s.activeTabId).toBe("b")
+		s = openNode(s, "a")
+		expect(s.openTabIds).toEqual(["a", "b"]) // no dupe
+		expect(s.activeTabId).toBe("a")
 	})
 
-	it("bumps epoch when reusing a tab so the editor remounts with new content", () => {
-		const s = createInitialTabsState()
-		expect(s.tabs[0].epoch).toBe(0)
-		const next = openFileInTabs(s, { name: "notes.md", markdown: "# Notes" })
-		expect(next.tabs[0].id).toBe(s.tabs[0].id) // same tab (reused)
-		expect(next.tabs[0].epoch).toBe(1) // but epoch bumped → new React key
+	it("closing a tab removes it from the open list and activates a neighbor", () => {
+		let s = openNode(openNode(openNode(createEmptyTabsState(), "a"), "b"), "c")
+		s = activate(s, "b")
+		s = closeTab(s, "b")
+		expect(s.openTabIds).toEqual(["a", "c"])
+		expect(s.activeTabId).toBe("a") // left neighbor
 	})
 
-	it("opens a dropped file in a new tab when the active tab is a file", () => {
-		let s = createInitialTabsState()
-		s = openFileInTabs(s, { name: "a.md", markdown: "A" })
-		const next = openFileInTabs(s, { name: "b.md", markdown: "B" })
-		expect(next.tabs).toHaveLength(2)
-		expect(next.tabs[1].name).toBe("b.md")
-		expect(next.activeTabId).toBe(next.tabs[1].id)
+	it("closing the active leftmost tab activates the new leftmost", () => {
+		let s = openNode(openNode(createEmptyTabsState(), "a"), "b")
+		s = activate(s, "a")
+		s = closeTab(s, "a")
+		expect(s.openTabIds).toEqual(["b"])
+		expect(s.activeTabId).toBe("b")
 	})
 
-	it("opens a dropped file in a new tab when the active tab is dirty", () => {
-		let s = createInitialTabsState()
-		s = setDirty(s, s.tabs[0].id, true)
-		const next = openFileInTabs(s, { name: "b.md", markdown: "B" })
-		expect(next.tabs).toHaveLength(2)
-		expect(next.activeTabId).toBe(next.tabs[1].id)
+	it("closing the last tab leaves no active tab", () => {
+		let s = openNode(createEmptyTabsState(), "a")
+		s = closeTab(s, "a")
+		expect(s.openTabIds).toEqual([])
+		expect(s.activeTabId).toBe(null)
 	})
 
-	it("newTab always appends a fresh empty tab and activates it", () => {
-		const s = createInitialTabsState()
-		const next = newTab(s)
-		expect(next.tabs).toHaveLength(2)
-		expect(next.tabs[1].isFile).toBe(false)
-		expect(next.activeTabId).toBe(next.tabs[1].id)
+	it("closeTabsForNodes closes all deleted nodes at once", () => {
+		let s = openNode(openNode(openNode(createEmptyTabsState(), "a"), "b"), "c")
+		s = activate(s, "b")
+		s = closeTabsForNodes(s, ["b", "c"])
+		expect(s.openTabIds).toEqual(["a"])
+		expect(s.activeTabId).toBe("a")
 	})
 
-	it("closing the active tab activates the left neighbor", () => {
-		let s = createInitialTabsState()
-		s = openFileInTabs(s, { name: "a.md", markdown: "A" }) // reuse -> [a]
-		s = newTab(s) // [a, untitled] active=untitled
-		const untitledId = s.activeTabId
-		const next = closeTab(s, untitledId)
-		expect(next.tabs).toHaveLength(1)
-		expect(next.tabs[0].name).toBe("a.md")
-		expect(next.activeTabId).toBe(next.tabs[0].id)
-	})
-
-	it("closing a background tab keeps the active tab unchanged", () => {
-		let s = createInitialTabsState()
-		s = openFileInTabs(s, { name: "a.md", markdown: "A" }) // reuse -> [a]
-		s = newTab(s) // [a, untitled] active=untitled
-		const activeId = s.activeTabId
-		const backgroundId = s.tabs[0].id // "a.md", not active
-		const next = closeTab(s, backgroundId)
-		expect(next.tabs).toHaveLength(1)
-		expect(next.tabs[0].name).toBe("Untitled")
-		expect(next.activeTabId).toBe(activeId) // unchanged
-	})
-
-	it("closeTab with an unknown id returns the state unchanged", () => {
-		const s = createInitialTabsState()
-		const next = closeTab(s, "does-not-exist")
-		expect(next).toBe(s)
-	})
-
-	it("setDirty with an unknown id leaves all tabs unchanged", () => {
-		const s = createInitialTabsState()
-		const next = setDirty(s, "does-not-exist", true)
-		expect(next.tabs.every((t) => !t.dirty)).toBe(true)
-		expect(next.activeTabId).toBe(s.activeTabId)
-	})
-
-	it("closing the last tab recreates a fresh empty tab", () => {
-		const s = createInitialTabsState()
-		const next = closeTab(s, s.tabs[0].id)
-		expect(next.tabs).toHaveLength(1)
-		expect(next.tabs[0].isFile).toBe(false)
-		expect(next.tabs[0].dirty).toBe(false)
-		expect(next.tabs[0].id).not.toBe(s.tabs[0].id)
-		expect(next.activeTabId).toBe(next.tabs[0].id)
-	})
-
-	it("setDirty toggles the flag on the target tab only", () => {
-		let s = createInitialTabsState()
-		s = newTab(s)
-		const first = s.tabs[0].id
-		const next = setDirty(s, first, true)
-		expect(next.tabs[0].dirty).toBe(true)
-		expect(next.tabs[1].dirty).toBe(false)
-	})
-
-	it("toPersisted captures current markdown per tab and the active id", () => {
-		let s = createInitialTabsState()
-		s = openFileInTabs(s, { name: "a.md", markdown: "A" }) // reuse -> [a]
-		s = newTab(s) // [a, untitled] active=untitled
-		const p = toPersisted(s, { [s.tabs[0].id]: "A-edited" })
-		expect(p.activeTabId).toBe(s.activeTabId)
-		expect(p.tabs).toHaveLength(2)
-		expect(p.tabs[0]).toMatchObject({
-			name: "a.md",
-			markdown: "A-edited",
-			isFile: true,
-		})
-		// tab without an entry in markdownByTab falls back to its initialMarkdown
-		expect(p.tabs[1].markdown).toBe("")
-	})
-
-	it("fromPersisted rebuilds clean tabs with markdown as initial content", () => {
-		const p = {
-			tabs: [
-				{ id: "x", name: "n.md", markdown: "# N", isFile: true, epoch: 2 },
-			],
-			activeTabId: "x",
-		}
-		const s = fromPersisted(p)
-		expect(s.tabs).toHaveLength(1)
-		expect(s.tabs[0]).toMatchObject({
-			id: "x",
-			name: "n.md",
-			initialMarkdown: "# N",
-			isFile: true,
-			dirty: false,
-			epoch: 2,
-		})
-		expect(s.activeTabId).toBe("x")
-	})
-
-	it("fromPersisted with no tabs returns a fresh initial state", () => {
-		const s = fromPersisted({ tabs: [], activeTabId: "" })
-		expect(s.tabs).toHaveLength(1)
-		expect(s.tabs[0].isFile).toBe(false)
+	it("setTabDirty toggles dirty per node; tabLabel appends a dot", () => {
+		expect(tabLabel("Doc", false)).toBe("Doc")
+		expect(tabLabel("Doc", true)).toBe("Doc •")
+		let s = openNode(createEmptyTabsState(), "a")
+		s = setTabDirty(s, "a", true)
+		expect(s.openTabIds).toEqual(["a"]) // structure unchanged
 	})
 })
