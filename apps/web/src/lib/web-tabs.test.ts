@@ -65,4 +65,17 @@ describe("tabs as node references", () => {
 		s = setTabDirty(s, "a", true)
 		expect(s.openTabIds).toEqual(["a"]) // structure unchanged
 	})
+
+	it("closing a non-active tab leaves the active tab unchanged", () => {
+		let s = openNode(openNode(openNode(createEmptyTabsState(), "a"), "b"), "c")
+		s = activate(s, "b") // active = b
+		s = closeTab(s, "a") // close a background tab
+		expect(s.openTabIds).toEqual(["b", "c"])
+		expect(s.activeTabId).toBe("b") // unchanged
+	})
+
+	it("closeTab with an unknown id returns state unchanged", () => {
+		const s = openNode(openNode(createEmptyTabsState(), "a"), "b")
+		expect(closeTab(s, "nope")).toEqual(s)
+	})
 })
