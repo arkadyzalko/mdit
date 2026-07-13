@@ -64,15 +64,21 @@ export function TreeNode(props: TreeNodeProps) {
 	const isRenaming = node.id === renamingId
 	const isDragOver = node.id === dragOverId
 
+	const activateRow = () => {
+		if (isRenaming) return
+		if (isFolder) props.onToggleExpand(node.id)
+		else props.onOpenFile(node.id)
+	}
+
 	const handleRowClick = (e: MouseEvent) => {
 		// Ignore synthetic clicks (detail === 0) dispatched when the dropdown
 		// menu closes: base-ui re-fires a click on menu close that bubbles to
 		// this row. Acting on it would re-open the tab of a just-deleted node.
-		// Real pointer clicks always carry detail >= 1.
+		// Real pointer clicks always carry detail >= 1. Keyboard activation
+		// (Enter/Space) also reports detail === 0, so it is routed through
+		// onKeyDown -> activateRow directly, not through this guarded handler.
 		if (e.detail === 0) return
-		if (isRenaming) return
-		if (isFolder) props.onToggleExpand(node.id)
-		else props.onOpenFile(node.id)
+		activateRow()
 	}
 
 	return (
@@ -102,6 +108,14 @@ export function TreeNode(props: TreeNodeProps) {
 				}}
 				onDragEnd={props.onDragEnd}
 				onClick={handleRowClick}
+				role="button"
+				tabIndex={0}
+				onKeyDown={(e) => {
+					if (e.key === "Enter" || e.key === " ") {
+						e.preventDefault()
+						activateRow()
+					}
+				}}
 			>
 				<button
 					type="button"

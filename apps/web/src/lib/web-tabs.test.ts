@@ -6,7 +6,6 @@ import {
 	closeTabsForNodes,
 	createEmptyTabsState,
 	openNode,
-	setTabDirty,
 	tabLabel,
 } from "./web-tabs"
 
@@ -58,12 +57,9 @@ describe("tabs as node references", () => {
 		expect(s.activeTabId).toBe("a")
 	})
 
-	it("setTabDirty toggles dirty per node; tabLabel appends a dot", () => {
+	it("tabLabel appends a dot when dirty", () => {
 		expect(tabLabel("Doc", false)).toBe("Doc")
 		expect(tabLabel("Doc", true)).toBe("Doc •")
-		let s = openNode(createEmptyTabsState(), "a")
-		s = setTabDirty(s, "a", true)
-		expect(s.openTabIds).toEqual(["a"]) // structure unchanged
 	})
 
 	it("closing a non-active tab leaves the active tab unchanged", () => {

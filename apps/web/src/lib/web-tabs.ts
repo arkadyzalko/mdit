@@ -1,10 +1,8 @@
 // A tab is a reference to a workspace file node (see workspace.ts). The
 // workspace tree owns file identity/name/content; this module only tracks
-// which nodes are open and which one is active. Per-tab UI state (dirty,
-// epoch) is kept on the route's WebTab records, not in TabsState, so
-// open/close operations stay simple array ops.
-
-export type WebTab = { nodeId: string; dirty: boolean; epoch: number }
+// which nodes are open and which one is active. Per-tab UI state (dirty) is
+// kept on the route's own ref, not in TabsState, so open/close operations
+// stay simple array ops.
 
 export type TabsState = {
 	openTabIds: string[]
@@ -53,22 +51,6 @@ export function closeTabsForNodes(
 	let next = state
 	for (const id of nodeIds) next = closeTab(next, id)
 	return next
-}
-
-export function setTabDirty(
-	state: TabsState,
-	_nodeId: string,
-	_dirty: boolean,
-): TabsState {
-	// Dirty is tracked on the route's WebTab records; the open/active
-	// structure is unaffected. Returned as-is so callers can treat all tab
-	// mutations uniformly through this module's vocabulary.
-	return state
-}
-
-export function bumpTabEpoch(state: TabsState, _nodeId: string): TabsState {
-	// Epoch is tracked on the route's WebTab records; see setTabDirty above.
-	return state
 }
 
 // Display label for a tab: appends a dot when it has unsaved changes. Shared

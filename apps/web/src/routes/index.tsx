@@ -26,6 +26,7 @@ import {
 	closeTabsForNodes,
 	createEmptyTabsState,
 	openNode,
+	type TabsState,
 	tabLabel,
 } from "../lib/web-tabs"
 import {
@@ -42,6 +43,19 @@ export const Route = createFileRoute("/")({
 	component: Home,
 })
 
+// A restored tabs state is loaded from a separate localStorage key than the
+// workspace, so the two can drift out of sync (partial write, devtools edit,
+// stale key from an older session). Drop any open tab whose node no longer
+// exists, and re-derive activeTabId so it never dangles.
+function reconcileTabs(stored: TabsState, workspace: Workspace): TabsState {
+	const openTabIds = stored.openTabIds.filter((id) => id in workspace.nodes)
+	if (openTabIds.length === 0) return createEmptyTabsState()
+	const activeTabId = openTabIds.includes(stored.activeTabId ?? "")
+		? stored.activeTabId
+		: openTabIds[0]
+	return { openTabIds, activeTabId }
+}
+
 function Home() {
 	// Load the persisted workspace ONCE so a fresh seed produces a single file
 	// id (calling loadWorkspace() twice would seed two different ids).
@@ -51,10 +65,12 @@ function Home() {
 		if (initial.seededFileId)
 			return openNode(createEmptyTabsState(), initial.seededFileId)
 		const stored = loadTabs()
-		return stored.openTabIds.length > 0 ? stored : createEmptyTabsState()
+		return stored.openTabIds.length > 0
+			? reconcileTabs(stored, initial.workspace)
+			: createEmptyTabsState()
 	})
-	// Per-open-tab UI state (dirty + epoch), keyed by node id.
-	const tabMeta = useRef<Record<string, { dirty: boolean; epoch: number }>>({})
+	// Per-open-tab UI state (dirty), keyed by node id.
+	const tabMeta = useRef<Record<string, { dirty: boolean }>>({})
 	const [, forceRerender] = useState(0)
 
 	const { settings, setSettings } = useSettings()
@@ -117,9 +133,9 @@ function Home() {
 	}
 
 	const setTabDirtyMeta = (id: string, dirty: boolean) => {
-		const prev = tabMeta.current[id] ?? { dirty: false, epoch: 0 }
+		const prev = tabMeta.current[id] ?? { dirty: false }
 		if (prev.dirty === dirty) return
-		tabMeta.current[id] = { ...prev, dirty }
+		tabMeta.current[id] = { dirty }
 		forceRerender((n) => n + 1)
 	}
 
@@ -222,10 +238,9 @@ function Home() {
 						    open tabs — fine for typical single-user sessions. */}
 						{openNodes.map((node) => {
 							const isActive = node.id === tabs.activeTabId
-							const epoch = tabMeta.current[node.id]?.epoch ?? 0
 							return (
 								<div
-									key={`${node.id}:${epoch}`}
+									key={node.id}
 									className={isActive ? "h-full w-full" : "hidden"}
 								>
 									<PlateController>
