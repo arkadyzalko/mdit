@@ -14,17 +14,28 @@ import { useSettings } from "../hooks/use-settings"
 import { useTheme } from "../hooks/use-theme"
 import { downloadMarkdown } from "../lib/download"
 import {
-	loadPersistedTabsState,
-	savePersistedTabsState,
-} from "../lib/persist-tabs"
+	loadTabs,
+	loadWorkspace,
+	saveTabs,
+	saveWorkspace,
+} from "../lib/persist-workspace"
 import { isImageFile } from "../lib/web-image"
 import {
+	activate,
 	closeTab,
-	createInitialTabsState,
-	newTab,
-	openFileInTabs,
-	setDirty,
+	closeTabsForNodes,
+	createEmptyTabsState,
+	openNode,
+	tabLabel,
 } from "../lib/web-tabs"
+import {
+	createFile,
+	deleteNode,
+	getChildren,
+	setNodeMarkdown,
+	type Workspace,
+	type WorkspaceNode,
+} from "../lib/workspace"
 
 export const Route = createFileRoute("/")({
 	ssr: false,
@@ -32,32 +43,95 @@ export const Route = createFileRoute("/")({
 })
 
 function Home() {
-	const [state, setState] = useState(
-		() => loadPersistedTabsState() ?? createInitialTabsState(),
-	)
+	// Load the persisted workspace ONCE so a fresh seed produces a single file
+	// id (calling loadWorkspace() twice would seed two different ids).
+	const initial = useRef(loadWorkspace()).current
+	const [workspace, setWorkspace] = useState<Workspace>(initial.workspace)
+	const [tabs, setTabs] = useState(() => {
+		if (initial.seededFileId)
+			return openNode(createEmptyTabsState(), initial.seededFileId)
+		const stored = loadTabs()
+		return stored.openTabIds.length > 0 ? stored : createEmptyTabsState()
+	})
+	// Per-open-tab UI state (dirty + epoch), keyed by node id.
+	const tabMeta = useRef<Record<string, { dirty: boolean; epoch: number }>>({})
+	const [, forceRerender] = useState(0)
+
 	const { settings, setSettings } = useSettings()
 	useTheme(settings.theme)
-	const markdownByTab = useRef<Record<string, string>>({})
 	const [showSettings, setShowSettings] = useState(false)
 	const [showAi, setShowAi] = useState(false)
 
+	// Latest editor content per node, mirrored on every keystroke so download
+	// and other actions can read the live value before it is persisted.
+	const liveMarkdown = useRef<Record<string, string>>({})
+
+	useEffect(() => saveWorkspace(workspace), [workspace])
+	useEffect(() => saveTabs(tabs), [tabs])
+
+	const nodeById = (id: string | null): WorkspaceNode | undefined =>
+		id ? workspace.nodes[id] : undefined
+
+	const openFile = (id: string) => {
+		const node = workspace.nodes[id]
+		if (!node || node.kind !== "file") return
+		setTabs((s) => openNode(s, id))
+	}
+
+	const closeActiveOrTab = (id: string) => {
+		// Close only removes the tab; the node stays in the workspace.
+		setTabs((s) => closeTab(s, id))
+	}
+
+	const handleDelete = (id: string) => {
+		const node = workspace.nodes[id]
+		if (!node) return
+		const childCount = getChildren(workspace, id).length
+		const msg =
+			childCount > 0
+				? `Delete "${node.name}" and everything inside it?`
+				: `Delete "${node.name}"?`
+		if (!window.confirm(msg)) return
+		const { workspace: nextWs, removedIds } = deleteNode(workspace, id)
+		setWorkspace(nextWs)
+		setTabs((s) => closeTabsForNodes(s, removedIds))
+		for (const removedId of removedIds) delete tabMeta.current[removedId]
+	}
+
+	const createChild = (parentId: string) => {
+		const { workspace: nextWs, node } = createFile(workspace, parentId)
+		setWorkspace(nextWs)
+		setTabs((s) => openNode(s, node.id))
+	}
+
+	const createRoot = () => {
+		const { workspace: nextWs, node } = createFile(workspace, null)
+		setWorkspace(nextWs)
+		setTabs((s) => openNode(s, node.id))
+	}
+
+	const setTabDirtyMeta = (id: string, dirty: boolean) => {
+		const prev = tabMeta.current[id] ?? { dirty: false, epoch: 0 }
+		if (prev.dirty === dirty) return
+		tabMeta.current[id] = { ...prev, dirty }
+		forceRerender((n) => n + 1)
+	}
+
 	const handlePersist = (id: string, markdown: string) => {
-		markdownByTab.current[id] = markdown
-		setState((s) => {
-			const next = setDirty(s, id, false)
-			savePersistedTabsState(next, markdownByTab.current)
-			return next
-		})
+		liveMarkdown.current[id] = markdown
+		setWorkspace((ws) => setNodeMarkdown(ws, id, markdown))
+		setTabDirtyMeta(id, false)
 	}
 
 	// Download the active tab's current content and mark it clean. Used by both
 	// Cmd/Ctrl+S and the toolbar Download button.
 	const downloadActiveTab = () => {
-		const active = state.tabs.find((t) => t.id === state.activeTabId)
-		if (!active) return
-		const markdown = markdownByTab.current[active.id] ?? active.initialMarkdown
-		downloadMarkdown(active.name, markdown)
-		setState((s) => setDirty(s, active.id, false))
+		const id = tabs.activeTabId
+		const node = nodeById(id)
+		if (!id || !node) return
+		const markdown = liveMarkdown.current[id] ?? node.markdown ?? ""
+		downloadMarkdown(node.name, markdown)
+		setTabDirtyMeta(id, false)
 	}
 
 	useEffect(() => {
@@ -74,34 +148,29 @@ function Home() {
 		return () => window.removeEventListener("keydown", onKeyDown)
 	})
 
-	useEffect(() => {
-		savePersistedTabsState(state, markdownByTab.current)
-	}, [state])
-
+	// A dropped markdown file creates a NEW workspace node and opens it.
 	const openMarkdownFile = async (file: File) => {
 		const markdown = await file.text()
-		setState((s) => openFileInTabs(s, { name: file.name, markdown }))
+		const { workspace: nextWs, node } = createFile(workspace, null, file.name)
+		setWorkspace(setNodeMarkdown(nextWs, node.id, markdown))
+		setTabs((s) => openNode(s, node.id))
 	}
 
-	const activate = (id: string) => setState((s) => ({ ...s, activeTabId: id }))
-
-	const handleClose = (id: string) => {
-		setState((s) => {
-			const tab = s.tabs.find((t) => t.id === id)
-			if (tab?.dirty && !window.confirm("Discard unsaved changes?")) {
-				return s
-			}
-			return closeTab(s, id)
-		})
-	}
+	const openNodes = tabs.openTabIds
+		.map((id) => workspace.nodes[id])
+		.filter((n): n is WorkspaceNode => Boolean(n))
 
 	return (
 		<AiClientProvider>
 			<div className="flex h-screen w-full gap-2 bg-background p-2">
 				<DocSidebar
-					tabs={state.tabs}
-					activeTabId={state.activeTabId}
-					onActivate={activate}
+					workspace={workspace}
+					activeNodeId={tabs.activeTabId}
+					onWorkspaceChange={setWorkspace}
+					onOpenFile={openFile}
+					onDeleteNode={handleDelete}
+					onCreateChild={createChild}
+					onCreateRoot={createRoot}
 					showSettings={showSettings}
 					settings={settings}
 					onChangeSettings={setSettings}
@@ -109,11 +178,14 @@ function Home() {
 				/>
 				<div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-background">
 					<TabStrip
-						tabs={state.tabs}
-						activeTabId={state.activeTabId}
-						onActivate={activate}
-						onClose={handleClose}
-						onNew={() => setState(newTab)}
+						tabs={openNodes.map((n) => ({
+							id: n.id,
+							label: tabLabel(n.name, tabMeta.current[n.id]?.dirty ?? false),
+						}))}
+						activeTabId={tabs.activeTabId}
+						onActivate={(id) => setTabs((s) => activate(s, id))}
+						onClose={closeActiveOrTab}
+						onNew={createRoot}
 						actions={
 							<>
 								<DownloadButton onClick={downloadActiveTab} />
@@ -130,7 +202,7 @@ function Home() {
 						onDrop={(e) => {
 							const file = Array.from(e.dataTransfer.files)[0]
 							// Images are handled inline by the editor (they stopPropagation);
-							// here we only handle markdown files → tab logic.
+							// here we only handle markdown files → new workspace node.
 							if (file && !isImageFile(file)) {
 								e.preventDefault()
 								void openMarkdownFile(file)
@@ -142,26 +214,27 @@ function Home() {
 						    editor keeps its content/undo state when switching. Each tab is
 						    a full Plate editor instance, so live editor count grows with
 						    open tabs — fine for typical single-user sessions. */}
-						{state.tabs.map((tab) => {
-							const isActive = tab.id === state.activeTabId
+						{openNodes.map((node) => {
+							const isActive = node.id === tabs.activeTabId
+							const epoch = tabMeta.current[node.id]?.epoch ?? 0
 							return (
 								<div
-									key={`${tab.id}:${tab.epoch}`}
+									key={`${node.id}:${epoch}`}
 									className={isActive ? "h-full w-full" : "hidden"}
 								>
 									<PlateController>
 										<EditorDndProvider>
 											<WebEditor
-												fileName={tab.name}
-												initialMarkdown={tab.initialMarkdown}
+												fileName={node.name}
+												initialMarkdown={node.markdown ?? ""}
 												autoSave={settings.autoSave}
 												autoSaveDelayMs={settings.autoSaveDelayMs}
 												onChange={(md) => {
-													markdownByTab.current[tab.id] = md
+													liveMarkdown.current[node.id] = md
 												}}
-												onPersist={(md) => handlePersist(tab.id, md)}
+												onPersist={(md) => handlePersist(node.id, md)}
 												onDirtyChange={(dirty) =>
-													setState((s) => setDirty(s, tab.id, dirty))
+													setTabDirtyMeta(node.id, dirty)
 												}
 											/>
 										</EditorDndProvider>

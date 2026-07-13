@@ -1,9 +1,9 @@
 import { TabBar } from "@mdit/ui/components/tab-bar"
 import type { ReactNode } from "react"
-import type { WebTab } from "../lib/web-tabs"
 
-// Thin web wrapper over the shared TabBar primitive: maps WebTab[] to the
-// primitive's generic items so web and desktop render identical tabs.
+// Thin web wrapper over the shared TabBar primitive. The route builds tab
+// items ({ id, label }) from the open workspace nodes and passes them in, so
+// this component stays presentational and free of tab data logic.
 export function TabStrip({
 	tabs,
 	activeTabId,
@@ -12,8 +12,8 @@ export function TabStrip({
 	onNew,
 	actions,
 }: {
-	tabs: WebTab[]
-	activeTabId: string
+	tabs: { id: string; label: string }[]
+	activeTabId: string | null
 	onActivate: (id: string) => void
 	onClose: (id: string) => void
 	onNew: () => void
@@ -21,8 +21,8 @@ export function TabStrip({
 }) {
 	return (
 		<TabBar
-			tabs={tabs.map((t) => ({ id: t.id, label: t.name, dirty: t.dirty }))}
-			activeTabId={activeTabId}
+			tabs={tabs}
+			activeTabId={activeTabId ?? ""}
 			onActivate={onActivate}
 			onClose={onClose}
 			onNew={onNew}

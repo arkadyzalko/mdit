@@ -1,30 +1,37 @@
-import { cn } from "@mdit/ui/lib/utils"
-import { FileTextIcon } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import type { WebSettings } from "../lib/settings"
-import { tabLabel, type WebTab } from "../lib/web-tabs"
+import type { Workspace } from "../lib/workspace"
 import { DownloadMac } from "./download-mac"
 import { SettingsContent } from "./settings-content"
+import { WorkspaceTree } from "./workspace-tree"
 
 const RECENTS_WIDTH = 256
 const SETTINGS_WIDTH = 420
 
 // Left sidebar as a floating rounded card (matching the mdit desktop look).
-// It hosts two modes in the SAME card: the recent-documents list and the
-// settings form. Opening settings expands the card and cross-fades its
-// content; closing reverses it. The card is the animated container.
+// It hosts two modes in the SAME card: the workspace tree and the settings
+// form. Opening settings expands the card and cross-fades its content; closing
+// reverses it. The card is the animated container.
 export function DocSidebar({
-	tabs,
-	activeTabId,
-	onActivate,
+	workspace,
+	activeNodeId,
+	onWorkspaceChange,
+	onOpenFile,
+	onDeleteNode,
+	onCreateChild,
+	onCreateRoot,
 	showSettings,
 	settings,
 	onChangeSettings,
 	onCloseSettings,
 }: {
-	tabs: WebTab[]
-	activeTabId: string
-	onActivate: (id: string) => void
+	workspace: Workspace
+	activeNodeId: string | null
+	onWorkspaceChange: (ws: Workspace) => void
+	onOpenFile: (id: string) => void
+	onDeleteNode: (id: string) => void
+	onCreateChild: (parentId: string) => void
+	onCreateRoot: () => void
 	showSettings: boolean
 	settings: WebSettings
 	onChangeSettings: (s: WebSettings) => void
@@ -62,39 +69,17 @@ export function DocSidebar({
 						exit={{ opacity: 0, x: -12 }}
 						transition={{ duration: 0.16, ease: "easeOut" }}
 					>
-						<div className="px-2 pt-1 pb-1.5 font-medium text-muted-foreground text-xs uppercase tracking-wide">
-							Recents
+						<div className="min-h-0 flex-1">
+							<WorkspaceTree
+								workspace={workspace}
+								activeNodeId={activeNodeId}
+								onWorkspaceChange={onWorkspaceChange}
+								onOpenFile={onOpenFile}
+								onDeleteNode={onDeleteNode}
+								onCreateChild={onCreateChild}
+								onCreateRoot={onCreateRoot}
+							/>
 						</div>
-						<nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
-							{tabs.map((tab) => {
-								const isActive = tab.id === activeTabId
-								return (
-									<button
-										key={tab.id}
-										type="button"
-										aria-current={isActive}
-										onClick={() => onActivate(tab.id)}
-										className={cn(
-											"flex h-8 items-center gap-2 rounded-lg px-2 text-left text-sm transition-colors",
-											isActive
-												? "bg-accent text-accent-foreground"
-												: "text-muted-foreground hover:bg-muted",
-										)}
-									>
-										<FileTextIcon
-											className={cn(
-												"size-3.5 shrink-0",
-												isActive
-													? "text-accent-foreground/70"
-													: "text-muted-foreground/60",
-											)}
-											aria-hidden
-										/>
-										<span className="truncate">{tabLabel(tab)}</span>
-									</button>
-								)
-							})}
-						</nav>
 						<DownloadMac />
 					</motion.div>
 				)}
