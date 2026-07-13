@@ -92,22 +92,36 @@ function Home() {
 				? `Delete "${node.name}" and everything inside it?`
 				: `Delete "${node.name}"?`
 		if (!window.confirm(msg)) return
-		const { workspace: nextWs, removedIds } = deleteNode(workspace, id)
-		setWorkspace(nextWs)
-		setTabs((s) => closeTabsForNodes(s, removedIds))
-		for (const removedId of removedIds) delete tabMeta.current[removedId]
+		let removed: string[] = []
+		setWorkspace((ws) => {
+			const { workspace: nextWs, removedIds } = deleteNode(ws, id)
+			removed = removedIds
+			return nextWs
+		})
+		if (removed.length) {
+			setTabs((s) => closeTabsForNodes(s, removed))
+			for (const removedId of removed) delete tabMeta.current[removedId]
+		}
 	}
 
 	const createChild = (parentId: string) => {
-		const { workspace: nextWs, node } = createFile(workspace, parentId)
-		setWorkspace(nextWs)
-		setTabs((s) => openNode(s, node.id))
+		let newId: string | null = null
+		setWorkspace((ws) => {
+			const { workspace: nextWs, node } = createFile(ws, parentId)
+			newId = node.id
+			return nextWs
+		})
+		if (newId) setTabs((s) => openNode(s, newId as string))
 	}
 
 	const createRoot = () => {
-		const { workspace: nextWs, node } = createFile(workspace, null)
-		setWorkspace(nextWs)
-		setTabs((s) => openNode(s, node.id))
+		let newId: string | null = null
+		setWorkspace((ws) => {
+			const { workspace: nextWs, node } = createFile(ws, null)
+			newId = node.id
+			return nextWs
+		})
+		if (newId) setTabs((s) => openNode(s, newId as string))
 	}
 
 	const setTabDirtyMeta = (id: string, dirty: boolean) => {
@@ -151,9 +165,13 @@ function Home() {
 	// A dropped markdown file creates a NEW workspace node and opens it.
 	const openMarkdownFile = async (file: File) => {
 		const markdown = await file.text()
-		const { workspace: nextWs, node } = createFile(workspace, null, file.name)
-		setWorkspace(setNodeMarkdown(nextWs, node.id, markdown))
-		setTabs((s) => openNode(s, node.id))
+		let newId: string | null = null
+		setWorkspace((ws) => {
+			const { workspace: w1, node } = createFile(ws, null, file.name)
+			newId = node.id
+			return setNodeMarkdown(w1, node.id, markdown)
+		})
+		if (newId) setTabs((s) => openNode(s, newId as string))
 	}
 
 	const openNodes = tabs.openTabIds
