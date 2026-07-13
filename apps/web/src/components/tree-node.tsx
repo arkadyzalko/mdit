@@ -14,6 +14,7 @@ import {
 	PlusIcon,
 	Trash2Icon,
 } from "lucide-react"
+import type { MouseEvent } from "react"
 import {
 	getChildren,
 	type Workspace,
@@ -63,7 +64,12 @@ export function TreeNode(props: TreeNodeProps) {
 	const isRenaming = node.id === renamingId
 	const isDragOver = node.id === dragOverId
 
-	const handleRowClick = () => {
+	const handleRowClick = (e: MouseEvent) => {
+		// Ignore synthetic clicks (detail === 0) dispatched when the dropdown
+		// menu closes: base-ui re-fires a click on menu close that bubbles to
+		// this row. Acting on it would re-open the tab of a just-deleted node.
+		// Real pointer clicks always carry detail >= 1.
+		if (e.detail === 0) return
 		if (isRenaming) return
 		if (isFolder) props.onToggleExpand(node.id)
 		else props.onOpenFile(node.id)
